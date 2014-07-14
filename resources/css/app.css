@@ -1,6 +1,27 @@
 .logo {
     padding-left: 22px;
 }
+
+.database-container button {
+    margin-right: 2px;
+}
+
+.collections-container {
+    margin-top: 30px;
+}
+
+.collection-list-item {
+    clear: both;
+}
+
+.collection-list-item .collection-link {
+    float: left;
+}
+
+.collection-list-item .close-btn {
+    float: right;
+}
+
 .query > textarea {
     height: 150px;
     resize: none;
