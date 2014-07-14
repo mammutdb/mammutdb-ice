@@ -1,0 +1,53 @@
+.logo {
+    padding-left: 22px;
+}
+.query > textarea {
+    height: 150px;
+    resize: none;
+}
+
+.query > a {
+    float: right;
+    margin-bottom: 6px;
+    font-size: 0.7rem;
+}
+
+.query > .show-btn {
+    display: none;
+}
+
+.query.collapsed > textarea{
+    display: none;
+}
+
+.query.collapsed > .hide-btn {
+    display: none;
+}
+
+.query.collapsed > .show-btn {
+    display: block;
+}
+
+.collection {
+    clear: both;
+}
+
+.col-item {
+    border: 1px solid #ccc;
+    padding: 10px;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+}
+
+.col-item > div {
+    margin-bottom: 2px;
+}
+
+.col-item .label {
+    width: 75px;
+    margin-right: 10px;
+}
+
+.col-item .field {
+    font-size: 0.6875rem;
+}
