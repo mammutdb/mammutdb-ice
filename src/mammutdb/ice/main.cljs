@@ -44,7 +44,7 @@
                (dom/h4 nil "Databases")
                (dom/button #js {:className "tiny"} "Add New")
                (dom/button #js {:className "tiny"} "Delete current")
-               (if (= (count (:databases data)) 0)
+               (if (empty? (:databases data))
                  (dom/p nil "No databases found")
                  (apply dom/select nil
                         (into [(dom/option nil "-- empty --")]
@@ -72,7 +72,7 @@
       (dom/div #js {:className "collections-container"}
                (dom/h4 nil "Collections")
                (dom/button #js {:className "tiny"} "Add New")
-               (if (= (count (:collections data)) 0)
+               (if (empty? (:collections data))
                  (dom/p nil "No collections found")
                  (apply dom/ul #js {:className "side-nav collections"}
                         (om/build-all collection-view (:collections data))))))))
@@ -101,7 +101,7 @@
   (reify
     om/IRender
     (render [this]
-      (if (= (count (:items data)) 0)
+      (if (empty? (:items data))
         (dom/p nil "No items found")
         (apply dom/div #js {:className "collection"}
                (om/build-all item-view (:items data)))))))
@@ -122,8 +122,8 @@
                           (dom/a #js {:className "show-btn" :onClick toggle-query-visibility} "[+] show")
                           (dom/textarea))
                  (om/build items-list-view data))))))
+
 (om/root
  query-panel-view
  app-state
  {:target (. js/document (getElementById "query-panel-view"))})
-
