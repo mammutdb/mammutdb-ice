@@ -16,7 +16,30 @@
          :collections []
          :items []
          :show-query false
+         :selected-database nil
+         :selected-collection nil
+         :selected-item nil
          }))
+
+;; Bridge between HTTP requests and state change
+(defn request-databases [data]
+  (http/json-xhr {:method :get
+                  :url (str base-url "/databases")
+                  :on-complete (fn [result] (om/update! data :databases result))
+                  :on-error (fn [result] (.log js/console (str result)))}))
+
+(defn request-collections [data database]
+  (http/json-xhr {:method :get
+                  :url (str base-url "/databases/" database)
+                  :on-complete (fn [result] (om/update! data :collections result))
+                  :on-error (fn [result] (.log js/console (str result)))}))
+
+(defn request-documents [data database collection]
+  (http/json-xhr {:method :get
+                  :url (str base-url "/databases/" database "/" collection)
+                  :on-complete (fn [result] (om/update! data :items result))
+                  :on-error (fn [result] (.log js/console (str result)))}))
+
 
 ;; DATABASE LIST
 (defn database-view
@@ -25,19 +48,14 @@
   (reify
     om/IRender
     (render [_]
-      (dom/option nil (:name data)))))
+      (dom/option #js {:value (:name data)} (:name data)))))
 
 (defn database-select-view
   "Renders a database elements list returned from the server"
   [data owner]
   (reify
     om/IWillMount
-    (will-mount [_]
-      (http/json-xhr {:method :get
-                      :url (str base-url "/databases")
-                      :on-complete (fn [result]
-                                     (om/update! data :databases result))
-                      :on-error (fn [result] (.log js/console (str result)))}))
+    (will-mount [_] (request-databases data))
     om/IRender
     (render [this]
       (dom/div #js {:className "database-container"}
@@ -46,7 +64,12 @@
                (dom/button #js {:className "tiny"} "Delete current")
                (if (empty? (:databases data))
                  (dom/p nil "No databases found")
-                 (apply dom/select nil
+                 (apply dom/select #js {:name "database"
+                                        :onChange (fn [e]
+                                                    (let [selected (->> (.-target e)
+                                                                        (.-value))]
+                                                      (om/update! data :selected-database selected)
+                                                      (request-collections data selected)))}
                         (into [(dom/option nil "-- empty --")]
                               (om/build-all database-view (:databases data)))))
                ))))
@@ -62,8 +85,13 @@
     om/IRender
     (render [this]
       (dom/li #js {:className "collection-list-item"}
-              (dom/a #js {:className "collection-link" :href "#"} (:name data))
-              (dom/a #js {:className "close-btn" :href "#"} "x")))))
+              (dom/a #js {:className "collection-link"
+                          :onClick (partial (fn [database collection e]
+                                              (.log js/console database collection)
+                                              (om/update! data :selected-collection collection)
+                                              (request-documents database collection)) (:selected-database data) (:name data))}
+                     (:name data))
+              (dom/a #js {:className "close-btn"} "x")))))
 
 (defn collection-list-view [data owner]
   (reify

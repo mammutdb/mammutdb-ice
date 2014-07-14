@@ -10,7 +10,8 @@
                  [org.clojure/data.json "0.2.5"]
                  [om "0.5.3"]
                  [cats "0.2.0-SNAPSHOT"]]
-  :plugins [[lein-cljsbuild "1.0.3"]]
+  :plugins [[lein-cljsbuild "1.0.3"]
+            [com.cemerick/austin "0.1.4"]]
   :cljsbuild {:builds {:cljs-repl
                        {:source-paths ["src"]
                         :compiler

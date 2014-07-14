@@ -1,6 +1,8 @@
 (ns mammutdb.ice.http
+  (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [goog.events :as events]
-            [goog.dom :as gdom])
+            [goog.dom :as gdom]
+            [cljs.core.async :refer [chan >! <!]])
   (:import [goog.net XhrIo]
            goog.net.EventType
            [goog.events EventType]))
