@@ -82,3 +82,11 @@
 .col-item .field {
     font-size: 0.6875rem;
 }
+
+.reveal-modal .button-group{
+    float: right;
+}
+
+#document-modal-view textarea{
+    height: 300px;
+}

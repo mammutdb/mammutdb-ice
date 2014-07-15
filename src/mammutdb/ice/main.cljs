@@ -2,6 +2,7 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [chan <! >! put! pub sub unsub unsub-all]]
+            [mammutdb.ice.modals :as modals]
             [mammutdb.ice.state :as state]
             [mammutdb.ice.events :refer [event-bus event-publisher event-publication]])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
