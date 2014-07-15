@@ -7,7 +7,6 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-2268"]
                  [org.clojure/core.async "0.1.303.0-886421-alpha"]
-                 [org.clojure/data.json "0.2.5"]
                  [om "0.5.3"]
                  [cats "0.2.0-SNAPSHOT"]]
   :plugins [[lein-cljsbuild "1.0.3"]

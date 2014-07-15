@@ -10,3 +10,6 @@ pom.xml.asc
 resources/js/main.js
 resources/js/out
 .#*
+repl/
+out/cljs
+out/clojure

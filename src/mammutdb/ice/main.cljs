@@ -1,7 +1,9 @@
 (ns mammutdb.ice.main
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [mammutdb.ice.http :as http]))
+            [mammutdb.ice.http :as http]
+            [cljs.core.async :refer [chan <! >! put! pub sub unsub unsub-all]])
+  (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
 (enable-console-print!)
 
@@ -21,24 +23,58 @@
          :selected-item nil
          }))
 
+;; Event publication
+(def event-bus (chan))
+(def event-publisher (chan))
+(def event-publication (pub event-publisher #(:event %)))
+
 ;; Bridge between HTTP requests and state change
-(defn request-databases [data]
-  (http/json-xhr {:method :get
-                  :url (str base-url "/databases")
-                  :on-complete (fn [result] (om/update! data :databases result))
-                  :on-error (fn [result] (.log js/console (str result)))}))
-
-(defn request-collections [data database]
-  (http/json-xhr {:method :get
-                  :url (str base-url "/databases/" database)
-                  :on-complete (fn [result] (om/update! data :collections result))
-                  :on-error (fn [result] (.log js/console (str result)))}))
-
 (defn request-documents [data database collection]
   (http/json-xhr {:method :get
                   :url (str base-url "/databases/" database "/" collection)
                   :on-complete (fn [result] (om/update! data :items result))
                   :on-error (fn [result] (.log js/console (str result)))}))
+
+
+;; Event processing
+(defmulti process-event :event)
+
+(defmethod process-event :load-databases [event]
+  (.log js/console "Load databases")
+  (http/json-xhr {:method :get
+                  :url (str base-url "/databases")
+                  :on-complete (fn [result]
+                                 (.log js/console "Returned get: " result)
+                                 (put! event-publisher {:event :result-databases :data result}))
+                  :on-error (fn [result] (.log js/console (str result)))}))
+
+(defmethod process-event :select-database [event]
+  (.log js/console "Database selected")
+  (http/json-xhr {:method :get
+                  :url (str base-url "/databases/" (-> event :data :database))
+                  :on-complete (fn [result]
+                                 (.log js/console "Returned get: " result)
+                                 (put! event-publisher {:event :result-collections :data result}))
+                  :on-error (fn [result] (.log js/console (str result)))}))
+
+(defmethod process-event :select-collection [event]
+  (.log js/console "Database selected")
+  (http/json-xhr {:method :get
+                  :url (str base-url "/databases/" (:data event))
+                  :on-complete (fn [result]
+                                 (.log js/console "Returned get: " result)
+                                 (put! event-publisher {:event :result-collections :data result}))
+                  :on-error (fn [result] (.log js/console (str result)))}))
+
+(defn start-event-loop []
+  (.log js/console "Starting event loop")
+  (go-loop []
+    (let [event (<! event-bus)]
+      (.log js/console (str event))
+      (process-event event))
+    (recur)))
+
+(start-event-loop)
 
 
 ;; DATABASE LIST
@@ -55,12 +91,21 @@
   [data owner]
   (reify
     om/IWillMount
-    (will-mount [_] (request-databases data))
+    (will-mount [_]
+      (put! event-bus {:event :load-databases})
+      (let [event-subscriber (chan)]
+        (sub event-publication :result-databases event-subscriber)
+        (go-loop []
+          (let [{result :data} (<! event-subscriber)]
+            (.log js/console (str result))
+            (om/update! data :databases result))
+          (recur))))
     om/IRender
     (render [this]
       (dom/div #js {:className "database-container"}
                (dom/h4 nil "Databases")
-               (dom/button #js {:className "tiny"} "Add New")
+               (dom/button #js {:onClick (fn [e] (put! event-bus {:event :new-database}))
+                                :className "tiny"} "Add New")
                (dom/button #js {:className "tiny"} "Delete current")
                (if (empty? (:databases data))
                  (dom/p nil "No databases found")
@@ -68,8 +113,7 @@
                                         :onChange (fn [e]
                                                     (let [selected (->> (.-target e)
                                                                         (.-value))]
-                                                      (om/update! data :selected-database selected)
-                                                      (request-collections data selected)))}
+                                                      (put! event-bus {:event :select-database :data {:database selected}})))}
                         (into [(dom/option nil "-- empty --")]
                               (om/build-all database-view (:databases data)))))
                ))))
@@ -89,12 +133,21 @@
                           :onClick (partial (fn [database collection e]
                                               (.log js/console database collection)
                                               (om/update! data :selected-collection collection)
-                                              (request-documents database collection)) (:selected-database data) (:name data))}
+                                              (request-documents data database collection)) (:selected-database data) (:name data))}
                      (:name data))
               (dom/a #js {:className "close-btn"} "x")))))
 
 (defn collection-list-view [data owner]
   (reify
+    om/IWillMount
+    (will-mount [_]
+      (let [event-subscriber (chan)]
+        (sub event-publication :result-collections event-subscriber)
+        (go-loop []
+          (let [{result :data} (<! event-subscriber)]
+            (.log js/console (str result))
+            (om/update! data :collections result))
+          (recur))))
     om/IRender
     (render [this]
       (dom/div #js {:className "collections-container"}
