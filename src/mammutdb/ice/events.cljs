@@ -26,18 +26,21 @@
 
 (defmethod process-event :select-database [event]
   (.log js/console "Database selected")
-  (swap! state/app assoc :selected-database (-> event :data :database))
-  (swap! state/app dissoc :selected-collection)
-  (put! event-publisher {:event :result-collections :data []})
-  (swap! state/app dissoc :selected-document)
-  (put! event-publisher {:event :result-documents :data []})
+  (let [value (-> event :data :database)
+        value (if (empty? value) nil value)]
+    (swap! state/app assoc :selected-database value)
+    (swap! state/app dissoc :selected-collection)
+    (put! event-publisher {:event :result-collections :data []})
+    (swap! state/app dissoc :selected-document)
+    (put! event-publisher {:event :result-documents :data []})
 
-  (http/json-xhr {:method :get
-                  :url (str base-url "/" (:selected-database @state/app))
-                  :on-complete (fn [result]
-                                 (.log js/console "Returned get: " result)
-                                 (put! event-publisher {:event :result-collections :data result}))
-                  :on-error (fn [result] (.log js/console (str result)))}))
+    (when value
+      (http/json-xhr {:method :get
+                      :url (str base-url "/" (:selected-database @state/app))
+                      :on-complete (fn [result]
+                                     (.log js/console "Returned get: " result)
+                                     (put! event-publisher {:event :result-collections :data result}))
+                      :on-error (fn [result] (.log js/console (str result)))}))))
 
 (defmethod process-event :select-collection [event]
   (.log js/console "Collection selected")

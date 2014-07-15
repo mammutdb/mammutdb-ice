@@ -46,7 +46,7 @@
                                                     (let [selected (->> (.-target e)
                                                                         (.-value))]
                                                       (put! event-bus {:event :select-database :data {:database selected}})))}
-                        (into [(dom/option nil "-- empty --")]
+                        (into [(dom/option #js {:value ""} "-- empty --")]
                               (om/build-all database-view (:databases data)))))
                ))))
 
@@ -83,14 +83,16 @@
           (recur))))
     om/IRender
     (render [this]
-      (dom/div #js {:className "collections-container"}
-               (dom/h4 nil "Collections")
-               (dom/a #js {:data-reveal-id "new-collection-modal"
-                           :className "button tiny"} "New Collection")
-               (if (empty? (:collections data))
-                 (dom/p nil "No collections found")
-                 (apply dom/ul #js {:className "side-nav collections"}
-                        (om/build-all collection-view (:collections data))))))))
+      (apply dom/div #js {:className "collections-container"}
+             (if (:selected-database data)
+               [(dom/h4 nil "Collections")
+                (dom/a #js {:data-reveal-id "new-collection-modal"
+                            :className "button tiny"} "New Collection")
+                (if (empty? (:collections data))
+                  (dom/p nil "No collections found")
+                  (apply dom/ul #js {:className "side-nav collections"}
+                         (om/build-all collection-view (:collections data))))]
+               [(dom/h4 nil "Select database")])))))
 
 (om/root
   collection-list-view
