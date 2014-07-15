@@ -10,7 +10,7 @@
 ;; Event publication
 (def event-bus (chan))
 (def event-publisher (chan))
-(def event-publication (pub event-publisher #(:event %)))
+(def event-publication (pub event-publisher :event))
 
 ;; Event processing
 (defmulti process-event :event)

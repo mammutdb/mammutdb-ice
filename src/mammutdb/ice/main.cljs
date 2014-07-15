@@ -92,7 +92,7 @@
                   (dom/p nil "No collections found")
                   (apply dom/ul #js {:className "side-nav collections"}
                          (om/build-all collection-view (:collections data))))]
-               [(dom/h4 nil "Select database")])))))
+               [(dom/p nil "Seleccione una base de datos")])))))
 
 (om/root
   collection-list-view
@@ -141,17 +141,19 @@
     (reify
       om/IRender
       (render[this]
-        (dom/div #js {:className "large-9 push-3 columns"}
-                 (dom/div #js {:className "collection-title"}
-                          (dom/h3 nil "Collection: Cool databases")
-                          (dom/a #js {:data-reveal-id "new-document-modal"
-                                      :className "button tiny"} "New Document"))
-                 (dom/div #js {:className (get-query-class)}
-                          (dom/a #js {:className "hide-btn" :onClick toggle-query-visibility} "[-] hide")
-                          (dom/a #js {:className "show-btn" :onClick toggle-query-visibility} "[+] query")
-                          (dom/textarea)
-                          (dom/hr nil))
-                 (om/build documents-list-view data))))))
+        (apply dom/div #js {:className "large-9 push-3 columns"}
+               (if (data :selected-collection)
+                 [(dom/div #js {:className "collection-title"}
+                           (dom/h3 nil (str "Collection: " (:selected-collection data)))
+                           (dom/a #js {:data-reveal-id "new-document-modal"
+                                       :className "button tiny"} "New Document"))
+                  (dom/div #js {:className (get-query-class)}
+                           (dom/a #js {:className "hide-btn" :onClick toggle-query-visibility} "[-] hide")
+                           (dom/a #js {:className "show-btn" :onClick toggle-query-visibility} "[+] query")
+                           (dom/textarea)
+                           (dom/hr nil))
+                  (om/build documents-list-view data)]
+                 [(dom/p nil "Seleccione una colección")]))))))
 
 (om/root
  query-panel-view
