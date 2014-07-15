@@ -18,9 +18,6 @@
          :collections []
          :items []
          :show-query false
-         :selected-database nil
-         :selected-collection nil
-         :selected-item nil
          }))
 
 ;; Event publication
@@ -28,21 +25,13 @@
 (def event-publisher (chan))
 (def event-publication (pub event-publisher #(:event %)))
 
-;; Bridge between HTTP requests and state change
-(defn request-documents [data database collection]
-  (http/json-xhr {:method :get
-                  :url (str base-url "/databases/" database "/" collection)
-                  :on-complete (fn [result] (om/update! data :items result))
-                  :on-error (fn [result] (.log js/console (str result)))}))
-
-
 ;; Event processing
 (defmulti process-event :event)
 
 (defmethod process-event :load-databases [event]
   (.log js/console "Load databases")
   (http/json-xhr {:method :get
-                  :url (str base-url "/databases")
+                  :url (str base-url "/")
                   :on-complete (fn [result]
                                  (.log js/console "Returned get: " result)
                                  (put! event-publisher {:event :result-databases :data result}))
@@ -50,20 +39,30 @@
 
 (defmethod process-event :select-database [event]
   (.log js/console "Database selected")
+  (swap! app-state assoc :selected-database (-> event :data :database))
+  (swap! app-state dissoc :selected-collection)
+  (put! event-publisher {:event :result-collections :data []})
+  (swap! app-state dissoc :selected-document)
+  (put! event-publisher {:event :result-documents :data []})
+
   (http/json-xhr {:method :get
-                  :url (str base-url "/databases/" (-> event :data :database))
+                  :url (str base-url "/" (:selected-database @app-state))
                   :on-complete (fn [result]
                                  (.log js/console "Returned get: " result)
                                  (put! event-publisher {:event :result-collections :data result}))
                   :on-error (fn [result] (.log js/console (str result)))}))
 
 (defmethod process-event :select-collection [event]
-  (.log js/console "Database selected")
+  (.log js/console "Collection selected")
+  (swap! app-state assoc :selected-collection (-> event :data :collection))
+  (swap! app-state dissoc :selected-document)
+  (put! event-publisher {:event :result-documents :data []})
+
   (http/json-xhr {:method :get
-                  :url (str base-url "/databases/" (:data event))
+                  :url (str base-url "/" (:selected-database @app-state) "/" (:selected-collection @app-state))
                   :on-complete (fn [result]
                                  (.log js/console "Returned get: " result)
-                                 (put! event-publisher {:event :result-collections :data result}))
+                                 (put! event-publisher {:event :result-documents :data result}))
                   :on-error (fn [result] (.log js/console (str result)))}))
 
 (defn start-event-loop []
@@ -130,10 +129,11 @@
     (render [this]
       (dom/li #js {:className "collection-list-item"}
               (dom/a #js {:className "collection-link"
-                          :onClick (partial (fn [database collection e]
-                                              (.log js/console database collection)
-                                              (om/update! data :selected-collection collection)
-                                              (request-documents data database collection)) (:selected-database data) (:name data))}
+                          :onClick (partial (fn [selected e]
+                                              ; (om/update! data :selected-collection collection)
+                                              ; (request-documents data database collection)
+                                              (put! event-bus {:event :select-collection :data {:collection selected}})
+                                              ) (:name data))}
                      (:name data))
               (dom/a #js {:className "close-btn"} "x")))))
 
@@ -180,6 +180,15 @@
 
 (defn items-list-view [data owner]
   (reify
+    om/IWillMount
+    (will-mount [_]
+      (let [event-subscriber (chan)]
+        (sub event-publication :result-documents event-subscriber)
+        (go-loop []
+          (let [{result :data} (<! event-subscriber)]
+            (.log js/console (str result))
+            (om/update! data :items result))
+          (recur))))
     om/IRender
     (render [this]
       (if (empty? (:items data))
