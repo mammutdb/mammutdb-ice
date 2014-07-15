@@ -1,80 +1,12 @@
 (ns mammutdb.ice.main
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
-            [mammutdb.ice.http :as http]
-            [cljs.core.async :refer [chan <! >! put! pub sub unsub unsub-all]])
+            [cljs.core.async :refer [chan <! >! put! pub sub unsub unsub-all]]
+            [mammutdb.ice.state :as state]
+            [mammutdb.ice.events :refer [event-bus event-publisher event-publication]])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
 (enable-console-print!)
-
-(def base-url "http://mammutdb.apiary-mock.com")
-
-(def app-state
-  (atom {; :databases [{:name "great_databases"}, {:name "piweek_winners"}]
-         ; :collections [{:name "functional_databases"}, {:name "nosql_databases"}, {:name "sql_databases"}]
-         ; :items (apply vector (map #(hash-map :id % :rev (str "1111-1111-" %) :createdAt "2014-01-01 12:00") (range 1 10)))
-
-         :databases []
-         :collections []
-         :items []
-         :show-query false
-         }))
-
-;; Event publication
-(def event-bus (chan))
-(def event-publisher (chan))
-(def event-publication (pub event-publisher #(:event %)))
-
-;; Event processing
-(defmulti process-event :event)
-
-(defmethod process-event :load-databases [event]
-  (.log js/console "Load databases")
-  (http/json-xhr {:method :get
-                  :url (str base-url "/")
-                  :on-complete (fn [result]
-                                 (.log js/console "Returned get: " result)
-                                 (put! event-publisher {:event :result-databases :data result}))
-                  :on-error (fn [result] (.log js/console (str result)))}))
-
-(defmethod process-event :select-database [event]
-  (.log js/console "Database selected")
-  (swap! app-state assoc :selected-database (-> event :data :database))
-  (swap! app-state dissoc :selected-collection)
-  (put! event-publisher {:event :result-collections :data []})
-  (swap! app-state dissoc :selected-document)
-  (put! event-publisher {:event :result-documents :data []})
-
-  (http/json-xhr {:method :get
-                  :url (str base-url "/" (:selected-database @app-state))
-                  :on-complete (fn [result]
-                                 (.log js/console "Returned get: " result)
-                                 (put! event-publisher {:event :result-collections :data result}))
-                  :on-error (fn [result] (.log js/console (str result)))}))
-
-(defmethod process-event :select-collection [event]
-  (.log js/console "Collection selected")
-  (swap! app-state assoc :selected-collection (-> event :data :collection))
-  (swap! app-state dissoc :selected-document)
-  (put! event-publisher {:event :result-documents :data []})
-
-  (http/json-xhr {:method :get
-                  :url (str base-url "/" (:selected-database @app-state) "/" (:selected-collection @app-state))
-                  :on-complete (fn [result]
-                                 (.log js/console "Returned get: " result)
-                                 (put! event-publisher {:event :result-documents :data result}))
-                  :on-error (fn [result] (.log js/console (str result)))}))
-
-(defn start-event-loop []
-  (.log js/console "Starting event loop")
-  (go-loop []
-    (let [event (<! event-bus)]
-      (.log js/console (str event))
-      (process-event event))
-    (recur)))
-
-(start-event-loop)
-
 
 ;; DATABASE LIST
 (defn database-view
@@ -119,7 +51,7 @@
 
 (om/root
   database-select-view
-  app-state
+  state/app
   {:target (. js/document (getElementById "database-select-view"))})
 
 ;; COLLECTIONS
@@ -160,7 +92,7 @@
 
 (om/root
   collection-list-view
-  app-state
+  state/app
   {:target (. js/document (getElementById "collection-list-view"))})
 
 
@@ -174,9 +106,9 @@
       om/IRender
       (render [this]
         (dom/div #js {:className "col-item"}
-                 (create-item "ID" :id)
-                 (create-item "REV" :rev)
-                 (create-item "Created" :createdAt))))))
+                 (create-item "ID" :_id)
+                 (create-item "REV" :_rev)
+                 (create-item "Created" :_createdat))))))
 
 (defn items-list-view [data owner]
   (reify
@@ -215,5 +147,5 @@
 
 (om/root
  query-panel-view
- app-state
+ state/app
  {:target (. js/document (getElementById "query-panel-view"))})
