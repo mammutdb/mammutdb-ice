@@ -60,7 +60,7 @@
   (reify
     om/IRender
     (render [this]
-      (dom/li #js {:className "collection-list-item"}
+      (dom/li #js {:className "collection-list-document"}
               (dom/a #js {:className "collection-link"
                           :onClick (partial (fn [selected e]
                                               ; (om/update! data :selected-collection collection)
@@ -98,21 +98,21 @@
   {:target (. js/document (getElementById "collection-list-view"))})
 
 
-;; ITEMS
-(defn item-view [data owner]
-  (letfn [(create-item [label field]
+;; DOCUMENTS
+(defn documents-view [data owner]
+  (letfn [(create-document [label field]
             (dom/div nil
                      (dom/span #js {:className "label"} label)
                      (dom/span #js {:className "field"} (field data))))]
     (reify
       om/IRender
       (render [this]
-        (dom/div #js {:className "col-item"}
-                 (create-item "ID" :_id)
-                 (create-item "REV" :_rev)
-                 (create-item "Created" :_createdat))))))
+        (dom/div #js {:className "col-document"}
+                 (create-document "ID" :_id)
+                 (create-document "REV" :_rev)
+                 (create-document "Created" :_createdat))))))
 
-(defn items-list-view [data owner]
+(defn documents-list-view [data owner]
   (reify
     om/IWillMount
     (will-mount [_]
@@ -121,14 +121,14 @@
         (go-loop []
           (let [{result :data} (<! event-subscriber)]
             (.log js/console (str result))
-            (om/update! data :items result))
+            (om/update! data :documents result))
           (recur))))
     om/IRender
     (render [this]
-      (if (empty? (:items data))
-        (dom/p nil "No items found")
+      (if (empty? (:documents data))
+        (dom/p nil "No documents found")
         (apply dom/div #js {:className "collection"}
-               (om/build-all item-view (:items data)))))))
+               (om/build-all documents-view (:documents data)))))))
 
 ;; QUERY PANEL
 (defn query-panel-view [data owner]
@@ -149,7 +149,7 @@
                           (dom/a #js {:className "show-btn" :onClick toggle-query-visibility} "[+] query")
                           (dom/textarea)
                           (dom/hr nil))
-                 (om/build items-list-view data))))))
+                 (om/build documents-list-view data))))))
 
 (om/root
  query-panel-view

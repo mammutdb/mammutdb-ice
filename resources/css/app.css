@@ -10,15 +10,15 @@
     margin-top: 30px;
 }
 
-.collection-list-item {
+.collection-list-document {
     clear: both;
 }
 
-.collection-list-item .collection-link {
+.collection-list-document .collection-link {
     float: left;
 }
 
-.collection-list-item .close-btn {
+.collection-list-document .close-btn {
     float: right;
 }
 
@@ -63,23 +63,23 @@
     clear: both;
 }
 
-.col-item {
+.col-document {
     border: 1px solid #ccc;
     padding: 10px;
     padding-bottom: 8px;
     margin-bottom: 10px;
 }
 
-.col-item > div {
+.col-document > div {
     margin-bottom: 2px;
 }
 
-.col-item .label {
+.col-document .label {
     width: 75px;
     margin-right: 10px;
 }
 
-.col-item .field {
+.col-document .field {
     font-size: 0.6875rem;
 }
 

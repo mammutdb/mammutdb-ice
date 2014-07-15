@@ -3,6 +3,6 @@
 (def app
   (atom {:databases []
          :collections []
-         :items []
+         :documents []
          :show-query false
          }))
