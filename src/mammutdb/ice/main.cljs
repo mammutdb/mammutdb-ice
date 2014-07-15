@@ -35,9 +35,9 @@
     (render [this]
       (dom/div #js {:className "database-container"}
                (dom/h4 nil "Databases")
-               (dom/button #js {:onClick (fn [e] (put! event-bus {:event :new-database}))
-                                :className "tiny"} "Add New")
-               (dom/button #js {:className "tiny"} "Delete current")
+               (dom/a #js {:data-reveal-id "new-database-modal"
+                           :className "button tiny"} "New database")
+               (dom/a #js {:className "button tiny"} "Delete")
                (if (empty? (:databases data))
                  (dom/p nil "No databases found")
                  (apply dom/select #js {:name "database"
@@ -84,7 +84,8 @@
     (render [this]
       (dom/div #js {:className "collections-container"}
                (dom/h4 nil "Collections")
-               (dom/button #js {:className "tiny"} "Add New")
+               (dom/a #js {:data-reveal-id "new-collection-modal"
+                           :className "button tiny"} "New Collection")
                (if (empty? (:collections data))
                  (dom/p nil "No collections found")
                  (apply dom/ul #js {:className "side-nav collections"}
@@ -138,11 +139,15 @@
       om/IRender
       (render[this]
         (dom/div #js {:className "large-9 push-3 columns"}
-                 (dom/h3 nil "Collection: Cool databases")
+                 (dom/div #js {:className "collection-title"}
+                          (dom/h3 nil "Collection: Cool databases")
+                          (dom/a #js {:data-reveal-id "new-document-modal"
+                                      :className "button tiny"} "New Document"))
                  (dom/div #js {:className (get-query-class)}
                           (dom/a #js {:className "hide-btn" :onClick toggle-query-visibility} "[-] hide")
-                          (dom/a #js {:className "show-btn" :onClick toggle-query-visibility} "[+] show")
-                          (dom/textarea))
+                          (dom/a #js {:className "show-btn" :onClick toggle-query-visibility} "[+] query")
+                          (dom/textarea)
+                          (dom/hr nil))
                  (om/build items-list-view data))))))
 
 (om/root

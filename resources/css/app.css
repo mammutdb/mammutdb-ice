@@ -2,7 +2,7 @@
     padding-left: 22px;
 }
 
-.database-container button {
+.database-container .button {
     margin-right: 2px;
 }
 
@@ -22,13 +22,23 @@
     float: right;
 }
 
+.collection-title h3{
+    float: left;
+}
+.collection-title .button {
+    float: right;
+}
+
+.query {
+    clear: both;
+}
 .query > textarea {
     height: 150px;
     resize: none;
 }
 
 .query > a {
-    float: right;
+    float: left;
     margin-bottom: 6px;
     font-size: 0.7rem;
 }

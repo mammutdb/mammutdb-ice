@@ -42,7 +42,51 @@
                 </div>
             </div>
         </div>
-        
+
+        <div id="new-database-modal" class="reveal-modal small" style="padding-bottom: 0px;" data-reveal="">
+            <p class="lead">Introduce el nombre de la base de datos</p>
+            <form>
+                <label>Database:</label>
+                <input type="text"></input>
+            </form>
+            <a class="close-reveal-modal">&#215;</a>
+            <ul class="button-group" style="float:right">
+                <li><a href="#" class="button small">Aceptar</a></li>
+                <li><a href="#" class="button small alert">Cancelar</a></li>
+            </ul>
+        </div>
+
+        <div id="new-collection-modal" class="reveal-modal small" style="padding-bottom: 0px;" data-reveal="">
+            <p class="lead">Introduce la colección y el tipo</p>
+            <form>
+                <label>Collection:</label>
+                <input type="text"></input>
+                <label>Type:</label>
+                <select>
+                    <option value="json">JSON</option>
+                </select>
+            </form>
+            <a class="close-reveal-modal">&#215;</a>
+            <ul class="button-group" style="float:right">
+                <li><a href="#" class="button small">Aceptar</a></li>
+                <li><a href="#" class="button small alert">Cancelar</a></li>
+            </ul>
+        </div>
+
+
+        <div id="new-document-modal" class="reveal-modal small" style="padding-bottom: 0px;" data-reveal="">
+            <p class="lead">Introduce el documento (JSON)</p>
+            <form>
+                <textarea style="height: 300px;"></textarea>
+            </form>
+            <a class="close-reveal-modal">&#215;</a>
+            <ul class="button-group" style="float:right">
+                <li><a href="#" class="button small">Aceptar</a></li>
+                <li><a href="#" class="button small alert">Cancelar</a></li>
+            </ul>
+        </div>
+
+
         <!-- end body-->
         <script src="http://fb.me/react-0.9.0.js"></script>
         <script src="js/vendor/jquery.js"></script>
