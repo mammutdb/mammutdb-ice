@@ -5,7 +5,7 @@
             [mammutdb.ice.modals :as modals]
             [mammutdb.ice.state :as state]
             [mammutdb.ice.events :refer [event-bus event-publisher event-publication]])
-  (:require-macros [cljs.core.async.macros :refer [go-loop]]))
+  (:require-macros [cljs.core.async.macros :refer [go-loop alt!]]))
 
 (enable-console-print!)
 
@@ -23,17 +23,25 @@
   [data owner]
   (reify
     om/IWillMount
-    (will-mount [_]
+    (will-mount [this]
       (put! event-bus {:event :load-databases})
-      (let [event-subscriber (chan)]
-        (sub event-publication :result-databases event-subscriber)
+      (let [result-event-subscriber (chan)
+            refresh-event-subscriber (chan)]
+        (sub event-publication :result-databases result-event-subscriber)
+        (sub event-publication :refresh-databases refresh-event-subscriber)
+
         (go-loop []
-          (let [{result :data} (<! event-subscriber)]
-            (.log js/console (str result))
-            (om/update! data :databases result))
+          (alt!
+            result-event-subscriber ([result]
+                                       (.log js/console (str (:data result)))
+                                       (om/update! data :databases (:data result)))
+            refresh-event-subscriber ([_]
+                                        (.log js/console "SIIII")
+                                        (om/refresh! owner)))
           (recur))))
     om/IRender
     (render [this]
+      (.log js/console (str "Render >> " (:databases @state/app)))
       (dom/div #js {:className "database-container"}
                (dom/h4 nil "Databases")
                (dom/a #js {:data-reveal-id "new-database-modal"
