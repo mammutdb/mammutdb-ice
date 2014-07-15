@@ -28,16 +28,16 @@
       (let [result-event-subscriber (chan)
             refresh-event-subscriber (chan)]
         (sub event-publication :result-databases result-event-subscriber)
-        (sub event-publication :refresh-databases refresh-event-subscriber)
+        (sub event-publication :set-database refresh-event-subscriber)
 
         (go-loop []
           (alt!
-            result-event-subscriber ([result]
-                                       (.log js/console (str (:data result)))
-                                       (om/update! data :databases (:data result)))
-            refresh-event-subscriber ([_]
-                                        (.log js/console "SIIII")
-                                        (om/refresh! owner)))
+            result-event-subscriber ([{event-data :data}]
+                                       (.log js/console (str event-data))
+                                       (om/update! data :databases event-data))
+            refresh-event-subscriber ([{event-data :data}]
+                                        (.log js/console (str "setting " event-data))
+                                        (set! (.-value (om/get-node owner "databaseList")) (:name event-data))))
           (recur))))
     om/IRender
     (render [this]
@@ -50,6 +50,7 @@
                (if (empty? (:databases data))
                  (dom/p nil "No databases found")
                  (apply dom/select #js {:name "database"
+                                        :ref "databaseList"
                                         :onChange (fn [e]
                                                     (let [selected (->> (.-target e)
                                                                         (.-value))]

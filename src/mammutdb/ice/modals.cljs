@@ -11,21 +11,24 @@
   (reify
     om/IRender
     (render [_]
-      (dom/div nil
-               (dom/p #js {:className "lead"} "Introduce el nombre de la base de datos")
-               (dom/form nil
-                         (dom/label nil "Database:")
-                         (dom/input #js {:ref "databaseName"
-                                         :type "text"}))
-               (dom/a #js {:dangerouslySetInnerHTML #js {:__html "&#215;"}
-                           :className "close-reveal-modal"} nil)
-               (dom/ul #js {:className "button-group"}
-                       (dom/li nil (dom/a #js {:onClick (fn [e] (let [database-name (.-value (om/get-node owner "databaseName"))]
-                                                                  (put! event-bus {:event :create-database :data {:database database-name}})
-                                                                  (jquery/close-modal "new-database-modal")))
-                                               :className "button small"} "Aceptar"))
-                       (dom/li nil (dom/a #js {:onClick #(jquery/close-modal "new-database-modal")
-                                               :className "button small alert"} "Cancelar")))))))
+      (letfn [(handle-create-database [_]
+                (let [database-name (.-value (om/get-node owner "databaseName"))]
+                  (put! event-bus {:event :create-database :data {:database database-name}})
+                  (jquery/close-modal "new-database-modal")
+                  (set! (.-value (om/get-node owner "databaseName")) "")))]
+        (dom/div nil
+                 (dom/p #js {:className "lead"} "Introduce el nombre de la base de datos")
+                 (dom/form nil
+                           (dom/label nil "Database:")
+                           (dom/input #js {:ref "databaseName"
+                                           :type "text"}))
+                 (dom/a #js {:dangerouslySetInnerHTML #js {:__html "&#215;"}
+                             :className "close-reveal-modal"} nil)
+                 (dom/ul #js {:className "button-group"}
+                         (dom/li nil (dom/a #js {:onClick handle-create-database
+                                                 :className "button small"} "Aceptar"))
+                         (dom/li nil (dom/a #js {:onClick #(jquery/close-modal "new-database-modal")
+                                                 :className "button small alert"} "Cancelar"))))))))
 
 (om/root
  database-modal-view

@@ -61,6 +61,7 @@
                   :on-complete (fn [result]
                                  (.log js/console "Returned put: " result)
                                  (state/add-database! result)
+                                 (put! event-publisher {:event :set-database :data result})
                                  (process-event {:event :select-database :data (:data event)}))
                   :on-error (fn [result] (.log js/console (str result)))}))
 
