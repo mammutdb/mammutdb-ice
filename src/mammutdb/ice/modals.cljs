@@ -40,19 +40,29 @@
   (reify
     om/IRender
     (render [_]
-      (dom/div nil
-               (dom/p #js {:className "lead"} "Introduce la colección y el tipo")
-               (dom/form nil
-                         (dom/label nil "Collection:")
-                         (dom/input #js {:type "text"})
-                         (dom/label nil "Type:")
-                         (dom/select nil
-                                     (dom/option #js {:value "json"} "JSON")))
-               (dom/a #js {:dangerouslySetInnerHTML #js {:__html "&#215;"}
-                           :className "close-reveal-modal"} nil)
-               (dom/ul #js {:className "button-group"}
-                       (dom/li nil (dom/a #js {:className "button small"} "Aceptar"))
-                       (dom/li nil (dom/a #js {:className "button small alert"} "Cancelar")))))))
+      (letfn [(handle-create-collection [_]
+                (let [collection-name (.-value (om/get-node owner "collectionName"))
+                      collection-type (.-value (om/get-node owner "collectionType"))]
+                  (put! event-bus {:event :create-collection :data {:collection collection-name
+                                                                    :type collection-type}})
+                  (jquery/close-modal "new-collection-modal")
+                  (set! (.-value (om/get-node owner "collectionName")) "")))]
+        (dom/div nil
+                 (dom/p #js {:className "lead"} "Introduce la colección y el tipo")
+                 (dom/form nil
+                           (dom/label nil "Collection:")
+                           (dom/input #js {:ref "collectionName"
+                                           :type "text"})
+                           (dom/label nil "Type:")
+                           (dom/select #js {:ref "collectionType"}
+                                       (dom/option #js {:value "json"} "JSON")))
+                 (dom/a #js {:dangerouslySetInnerHTML #js {:__html "&#215;"}
+                             :className "close-reveal-modal"} nil)
+                 (dom/ul #js {:className "button-group"}
+                         (dom/li nil (dom/a #js {:onClick handle-create-collection
+                                                 :className "button small"} "Aceptar"))
+                         (dom/li nil (dom/a #js {:onClick #(jquery/close-modal "new-collection-modal")
+                                                 :className "button small alert"} "Cancelar"))))))))
 
 (om/root
  collection-modal-view

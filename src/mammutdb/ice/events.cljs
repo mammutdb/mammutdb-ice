@@ -65,6 +65,16 @@
                                  (process-event {:event :select-database :data (:data event)}))
                   :on-error (fn [result] (.log js/console (str result)))}))
 
+(defmethod process-event :create-collection [event]
+  (http/json-xhr {:method :put
+                  :url (str base-url "/" (:selected-database @state/app) "/" (-> event :data :collection))
+                  :on-complete (fn [result]
+                                 (.log js/console "Returned put: " result)
+                                 (state/add-collection! result)
+                                 (put! event-publisher {:event :set-collection :data result})
+                                 (process-event {:event :select-collection :data (:data event)}))
+                  :on-error (fn [result] (.log js/console (str result)))}))
+
 (defn start-event-loop []
   (.log js/console "Starting event loop")
   (go-loop []
