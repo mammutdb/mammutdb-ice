@@ -7,8 +7,8 @@ pom.xml.asc
 *.class
 /.lein-*
 /.nrepl-port
-resources/js/main.js
-resources/js/out
+resources/public/js/main.js
+resources/public/js/out
 .#*
 repl/
 out/cljs

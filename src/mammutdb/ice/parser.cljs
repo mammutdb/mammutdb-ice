@@ -12,6 +12,6 @@
 
 (defn json->txt [json]
   (try
-    (either/right (.stringify js/JSON text))
+    (either/right (.stringify js/JSON json))
     (catch js/Error e
       (either/left (.-message e)))))
