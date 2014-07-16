@@ -145,6 +145,12 @@
                      [(dom/pre #js {:dangerouslySetInnerHTML #js {:__html data-text}
                                     :className "json"})
                       (dom/ul #js {:className "button-group"}
+                              (dom/li nil (dom/a #js {:data-reveal-id "update-document-modal"
+                                                      :onClick (partial (fn [id e]
+                                                                          (state/edit-document! id data-text)
+                                                                          (put! event-publisher {:event :refresh-modal})) (:_id data))
+                                                      :className "button tiny"} "Editar"))
+                              (dom/li nil (dom/a #js {:className "button tiny"} "Borrar"))
                               (dom/li nil (dom/a #js {:className "button tiny"} "Anterior"))
                               (dom/li nil (dom/a #js {:className "button tiny"} "Siguiente")))])))))))
 

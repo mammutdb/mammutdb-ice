@@ -9,7 +9,7 @@
             [mammutdb.ice.events :refer [event-bus event-publisher event-publication]]
             [mammutdb.ice.validation :as valid]
             [mammutdb.ice.parser :as p])
-  (:require-macros [cljs.core.async.macros :refer [go-loop]]))
+  (:require-macros [cljs.core.async.macros :refer [go-loop alt!]]))
 
 (defn database-modal-view [data owner]
   (reify
@@ -129,3 +129,51 @@
  state/app
  {:target (. js/document (getElementById "new-document-modal"))})
 
+
+(defn update-document-modal-view [data owner]
+  (reify
+    om/IInitState
+    (init-state [_] {:error nil})
+    om/IWillMount
+    (will-mount [_]
+      (let [refresh-event-subscriber (chan)]
+        ;(sub event-publication :refresh-modal refresh-event-subscriber)
+        (go-loop []
+          (alt!
+            refresh-event-subscriber ([_] (om/refresh! owner)))
+          (recur))))
+    om/IDidUpdate
+    (did-update [this prev-props prev-state]
+      (set! (.-value (om/get-node owner "documentBody")) (-> data :editing-document :data)))
+    om/IRenderState
+    (render-state [this state]
+      (letfn [(handle-update-document [id _]
+                (let [document-text (->> (om/get-node owner "documentBody") (.-value))
+                      validation-result (m/>>= (valid/validate-create-data :document {:document document-text})
+                                               (fn [_] (p/txt->json document-text))
+                                               (fn [valid-json]
+                                                 (om/set-state! owner :error "")
+                                                 (put! event-bus {:event :create-document
+                                                                  :data {:document (assoc (js->clj valid-json) :_id id)}})
+                                                 (jquery/close-modal "new-document-modal")
+                                                 (set! (.-value (om/get-node owner "documentBody")) "")
+                                                 (either/right)))]
+                  (when (either/left? validation-result)
+                    (om/set-state! owner :error (either/from-either validation-result)))))]
+        (dom/div nil
+                 (dom/p #js {:className "lead"} "Modifica el documento (JSON)")
+                 (dom/p #js {:className "documentId"} (str (-> data :editing-document :id)))
+                 (dom/p #js {:className "error"} (:error state))
+                 (dom/textarea #js {:ref "documentBody"})
+                 (dom/a #js {:dangerouslySetInnerHTML #js {:__html "&#215;"}
+                             :className "close-reveal-modal"} nil)
+                 (dom/ul #js {:className "button-group"}
+                         (dom/li nil (dom/a #js {:onClick (partial handle-update-document (-> data :editing-document :id))
+                                                 :className "button small"} "Aceptar"))
+                         (dom/li nil (dom/a #js {:onClick #(jquery/close-modal "new-document-modal")
+                                                 :className "button small alert"} "Cancelar"))))))))
+
+(om/root
+ update-document-modal-view
+ state/app
+ {:target (. js/document (getElementById "update-document-modal"))})

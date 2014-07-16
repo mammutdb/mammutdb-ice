@@ -103,6 +103,6 @@
     color: red;
 }
 
-#new-document-modal textarea{
+#new-document-modal textarea, #update-document-modal textarea{
     height: 300px;
 }
