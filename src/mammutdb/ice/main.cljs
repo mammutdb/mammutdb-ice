@@ -114,25 +114,52 @@
   (letfn [(create-document [label field]
             (dom/div nil
                      (dom/span #js {:className "label"} label)
-                     (dom/span #js {:className "field"} (field data))))]
+                     (dom/span #js {:className "field"} (field data))))
+          (select-document [id _]
+            (put! event-bus {:event :select-document :data {:document-id id}}))
+        ]
     (reify
+      om/IWillMount
+      (will-mount [_]
+        (let [event-subscriber (chan)
+              refresh-event-subscriber (chan)]
+          (sub event-publication :refresh-documents refresh-event-subscriber)
+          (go-loop []
+            (alt!
+              refresh-event-subscriber ([_] (om/refresh! owner)))
+            (recur))))
       om/IRender
       (render [this]
-        (dom/div #js {:className "col-document"}
+        (apply dom/div #js {:onClick (partial select-document (:_id data))
+                            :className "col-document"}
                  (create-document "ID" :_id)
                  (create-document "REV" :_rev)
-                 (create-document "Created" :_createdat))))))
+                 (create-document "Created" :_createdat)
+                 (if (= (:displaying-document @state/app) (:_id data))
+                   (let [data-text (-> data
+                                       (dissoc :_id)
+                                       (dissoc :_rev)
+                                       (dissoc :_createdat)
+                                       (clj->js)
+                                       (#(.stringify js/JSON % nil 2)))]
+                     [(dom/pre #js {:dangerouslySetInnerHTML #js {:__html data-text}
+                                    :className "json"})
+                      (dom/ul #js {:className "button-group"}
+                              (dom/li nil (dom/a #js {:className "button tiny"} "Anterior"))
+                              (dom/li nil (dom/a #js {:className "button tiny"} "Siguiente")))])))))))
 
 (defn documents-list-view [data owner]
   (reify
     om/IWillMount
     (will-mount [_]
-      (let [event-subscriber (chan)]
+      (let [event-subscriber (chan)
+            refresh-event-subscriber (chan)]
         (sub event-publication :result-documents event-subscriber)
+        (sub event-publication :refresh-documents refresh-event-subscriber)
         (go-loop []
-          (let [{result :data} (<! event-subscriber)]
-            (.log js/console (str result))
-            (om/update! data :documents result))
+          (alt!
+            event-subscriber ([{result :data}] (om/update! data :documents result))
+            refresh-event-subscriber ([_] (om/refresh! owner)))
           (recur))))
     om/IRender
     (render [this]

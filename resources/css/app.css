@@ -83,6 +83,16 @@
     font-size: 0.6875rem;
 }
 
+.col-document .json {
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 1px solid #008cba;
+}
+
+.col-document .button-group .button {
+    margin: 0px;
+}
+
 .reveal-modal .button-group{
     float: right;
 }

@@ -75,6 +75,20 @@
                                  (process-event {:event :select-collection :data (:data event)}))
                   :on-error (fn [result] (.log js/console (str result)))}))
 
+(defmethod process-event :create-document [event]
+  (http/json-xhr {:method :post
+                  :url (str base-url "/" (:selected-database @state/app) "/" (:selected-collection @state/app))
+                  :data (-> event :data :document)
+                  :on-complete (fn [result]
+                                 (.log js/console "Returned put: " result)
+                                 (state/add-document! result)
+                                 (put! event-publisher {:event :refresh-documents}))
+                  :on-error (fn [result] (.log js/console (str result)))}))
+
+(defmethod process-event :select-document [{data :data}]
+  (state/displaying-document! (:document-id data))
+  (put! event-publisher {:event :refresh-documents}))
+
 (defn start-event-loop []
   (.log js/console "Starting event loop")
   (go-loop []

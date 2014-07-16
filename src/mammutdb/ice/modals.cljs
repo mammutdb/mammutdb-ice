@@ -74,15 +74,27 @@
   (reify
     om/IRender
     (render [_]
-      (dom/div nil
-               (dom/p #js {:className "lead"} "Introduce el documento (JSON)")
-               (dom/form nil
-                         (dom/textarea nil))
-               (dom/a #js {:dangerouslySetInnerHTML #js {:__html "&#215;"}
-                           :className "close-reveal-modal"} nil)
-               (dom/ul #js {:className "button-group"}
-                       (dom/li nil (dom/a #js {:className "button small"} "Aceptar"))
-                       (dom/li nil (dom/a #js {:className "button small alert"} "Cancelar")))))))
+      (letfn [(handle-create-document [_]
+                (let [document-body
+                      (->> "documentBody"
+                           (om/get-node owner)
+                           (.-value)
+                           (.parse js/JSON)
+                           (js->clj))]
+                  (put! event-bus {:event :create-document :data {:document document-body}})
+                  (jquery/close-modal "new-document-modal")
+                  (set! (.-value (om/get-node owner "documentBody")) "")))]
+        (dom/div nil
+                 (dom/p #js {:className "lead"} "Introduce el documento (JSON)")
+                 (dom/form nil
+                           (dom/textarea #js {:ref "documentBody"}))
+                 (dom/a #js {:dangerouslySetInnerHTML #js {:__html "&#215;"}
+                             :className "close-reveal-modal"} nil)
+                 (dom/ul #js {:className "button-group"}
+                         (dom/li nil (dom/a #js {:onClick handle-create-document
+                                                 :className "button small"} "Aceptar"))
+                         (dom/li nil (dom/a #js {:onClick #(jquery/close-modal "new-document-modal")
+                                                 :className "button small alert"} "Cancelar"))))))))
 
 (om/root
  document-modal-view
