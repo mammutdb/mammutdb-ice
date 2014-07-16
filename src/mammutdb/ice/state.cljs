@@ -17,8 +17,9 @@
 (defn replace-by-id [collection document]
   (let [indexed-collection (map-indexed vector collection)
         [index _] (first (filter #(= (:_id (second %)) (:_id document)) indexed-collection))]
-    (println (str ">> " index))
-    (assoc collection index document)))
+    (if index
+      (assoc collection index document)
+      (conj collection document))))
 
 (defn add-database! [database]
   (add-to-collection-sorted! :databases database))
@@ -27,9 +28,7 @@
   (add-to-collection-sorted! :collections collection))
 
 (defn add-document! [document]
-  (if (:_id document)
-    (swap! app update-in [:documents] replace-by-id document)
-    (swap! app update-in [:documents] conj document))
+  (swap! app update-in [:documents] replace-by-id document)
   (swap! app assoc :displaying-document (:_id document)))
 
 (defn displaying-document! [document-id]
