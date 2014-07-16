@@ -1,23 +1,36 @@
 (ns mammutdb.ice.modals
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
+            [cats.monad.either :as either]
+            [cats.core :as m]
             [cljs.core.async :refer [chan <! >! put! pub sub unsub unsub-all]]
             [mammutdb.ice.jquery :as jquery]
             [mammutdb.ice.state :as state]
-            [mammutdb.ice.events :refer [event-bus event-publisher event-publication]])
+            [mammutdb.ice.events :refer [event-bus event-publisher event-publication]]
+            [mammutdb.ice.validation :as valid])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
 (defn database-modal-view [data owner]
   (reify
-    om/IRender
-    (render [_]
+    om/IInitState
+    (init-state [_] {:error nil})
+    om/IRenderState
+    (render-state [this state]
       (letfn [(handle-create-database [_]
-                (let [database-name (.-value (om/get-node owner "databaseName"))]
-                  (put! event-bus {:event :create-database :data {:database database-name}})
-                  (jquery/close-modal "new-database-modal")
-                  (set! (.-value (om/get-node owner "databaseName")) "")))]
+                (let [database-name (.-value (om/get-node owner "databaseName"))
+                      create-data {:database database-name}
+                      validation-result (m/>>= (valid/validate-create-data :database create-data)
+                                               (fn [valid-data]
+                                                 (om/set-state! owner :error "")
+                                                 (put! event-bus {:event :create-database :data create-data})
+                                                 (jquery/close-modal "new-database-modal")
+                                                 (set! (.-value (om/get-node owner "databaseName")) "")
+                                                 (either/right)))]
+                  (when (either/left? validation-result)
+                    (om/set-state! owner :error (.-v validation-result)))))]
         (dom/div nil
                  (dom/p #js {:className "lead"} "Introduce el nombre de la base de datos")
+                 (dom/p #js {:className "error"} (:error state))
                  (dom/form nil
                            (dom/label nil "Database:")
                            (dom/input #js {:ref "databaseName"

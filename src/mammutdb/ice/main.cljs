@@ -134,12 +134,12 @@
                             :className "col-document"}
                  (create-document "ID" :_id)
                  (create-document "REV" :_rev)
-                 (create-document "Created" :_createdat)
+                 (create-document "Created" :_created_at)
                  (if (= (:displaying-document @state/app) (:_id data))
                    (let [data-text (-> data
                                        (dissoc :_id)
                                        (dissoc :_rev)
-                                       (dissoc :_createdat)
+                                       (dissoc :_created_at)
                                        (clj->js)
                                        (#(.stringify js/JSON % nil 2)))]
                      [(dom/pre #js {:dangerouslySetInnerHTML #js {:__html data-text}

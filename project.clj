@@ -8,7 +8,8 @@
                  [org.clojure/clojurescript "0.0-2268"]
                  [org.clojure/core.async "0.1.303.0-886421-alpha"]
                  [om "0.5.3"]
-                 [cats "0.2.0-SNAPSHOT"]]
+                 [cats "0.2.0-SNAPSHOT"]
+                 [prismatic/schema "0.2.4"]]
   :plugins [[lein-cljsbuild "1.0.3"]
             [com.cemerick/austin "0.1.4"]]
   :cljsbuild {:builds {:cljs-repl

@@ -87,6 +87,8 @@
     padding: 15px;
     margin-bottom: 10px;
     border: 1px solid #008cba;
+    line-height: 16px;
+    font-family: monospace;
 }
 
 .col-document .button-group .button {
