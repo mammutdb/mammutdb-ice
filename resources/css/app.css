@@ -99,6 +99,10 @@
     float: right;
 }
 
+.reveal-modal .error {
+    color: red;
+}
+
 #new-document-modal textarea{
     height: 300px;
 }

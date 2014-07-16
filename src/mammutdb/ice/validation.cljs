@@ -6,7 +6,17 @@
 (defn valid-name? [val]
   (boolean (re-matches #"\w+" val)))
 
-(defn valid-json? [val] true)
+(defn valid-json?
+  "Determines if a string is a valid json object. Will return
+   false if it is a primitive different from Object"
+  [val]
+  (try
+    (let [obj (.parse js/JSON val)]
+      (and (= (type obj) js/Object)
+           (not= (type obj) js/Array)))
+    (catch js/Error e
+      (.log js/console e)
+      false)))
 
 (def create-schemas
   {:database
@@ -14,7 +24,7 @@
 
    :collection
    {:collection (s/both s/Str (s/pred valid-name?))
-    :type s/Keyword}
+    :type (s/both  s/Str (s/pred (partial = "json")))}
 
    :document
    {:document (s/both s/Str (s/pred valid-json?))}})
@@ -25,8 +35,9 @@
     (let [schema (type create-schemas)]
       (either/right (s/validate schema data)))
     (catch js/Error e
+      (.log js/console (str (.-data e)))
       (let [fields (->> (.-data e)
-                        (:value)
+                        (:error)
                         (keys)
                         (map name)
                         (join ","))]

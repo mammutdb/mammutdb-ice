@@ -7,7 +7,8 @@
             [mammutdb.ice.jquery :as jquery]
             [mammutdb.ice.state :as state]
             [mammutdb.ice.events :refer [event-bus event-publisher event-publication]]
-            [mammutdb.ice.validation :as valid])
+            [mammutdb.ice.validation :as valid]
+            [mammutdb.ice.parser :as p])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
 (defn database-modal-view [data owner]
@@ -27,7 +28,7 @@
                                                  (set! (.-value (om/get-node owner "databaseName")) "")
                                                  (either/right)))]
                   (when (either/left? validation-result)
-                    (om/set-state! owner :error (.-v validation-result)))))]
+                    (om/set-state! owner :error (either/from-either validation-result)))))]
         (dom/div nil
                  (dom/p #js {:className "lead"} "Introduce el nombre de la base de datos")
                  (dom/p #js {:className "error"} (:error state))
@@ -51,17 +52,26 @@
 
 (defn collection-modal-view [data owner]
   (reify
-    om/IRender
-    (render [_]
+    om/IInitState
+    (init-state [_] {:error nil})
+    om/IRenderState
+    (render-state [this state]
       (letfn [(handle-create-collection [_]
                 (let [collection-name (.-value (om/get-node owner "collectionName"))
-                      collection-type (.-value (om/get-node owner "collectionType"))]
-                  (put! event-bus {:event :create-collection :data {:collection collection-name
-                                                                    :type collection-type}})
-                  (jquery/close-modal "new-collection-modal")
-                  (set! (.-value (om/get-node owner "collectionName")) "")))]
+                      collection-type (.-value (om/get-node owner "collectionType"))
+                      create-data {:collection collection-name :type collection-type}
+                      validation-result (m/>>= (valid/validate-create-data :collection create-data)
+                                               (fn [valid-data]
+                                                 (om/set-state! owner :error "")
+                                                 (put! event-bus {:event :create-collection :data create-data})
+                                                 (jquery/close-modal "new-collection-modal")
+                                                 (set! (.-value (om/get-node owner "collectionName")) "")
+                                                 (either/right)))]
+                  (when (either/left? validation-result)
+                    (om/set-state! owner :error (either/from-either validation-result)))))]
         (dom/div nil
                  (dom/p #js {:className "lead"} "Introduce la colección y el tipo")
+                 (dom/p #js {:className "error"} (:error state))
                  (dom/form nil
                            (dom/label nil "Collection:")
                            (dom/input #js {:ref "collectionName"
@@ -85,20 +95,25 @@
 
 (defn document-modal-view [data owner]
   (reify
-    om/IRender
-    (render [_]
+    om/IInitState
+    (init-state [_] {:error nil})
+    om/IRenderState
+    (render-state [this state]
       (letfn [(handle-create-document [_]
-                (let [document-body
-                      (->> "documentBody"
-                           (om/get-node owner)
-                           (.-value)
-                           (.parse js/JSON)
-                           (js->clj))]
-                  (put! event-bus {:event :create-document :data {:document document-body}})
-                  (jquery/close-modal "new-document-modal")
-                  (set! (.-value (om/get-node owner "documentBody")) "")))]
+                (let [document-text (->> (om/get-node owner "documentBody") (.-value))
+                      validation-result (m/>>= (valid/validate-create-data :document {:document document-text})
+                                               (fn [_] (p/txt->json document-text))
+                                               (fn [valid-json]
+                                                 (om/set-state! owner :error "")
+                                                 (put! event-bus {:event :create-document :data {:document (js->clj valid-json)}})
+                                                 (jquery/close-modal "new-document-modal")
+                                                 (set! (.-value (om/get-node owner "documentBody")) "")
+                                                 (either/right)))]
+                  (when (either/left? validation-result)
+                    (om/set-state! owner :error (either/from-either validation-result)))))]
         (dom/div nil
                  (dom/p #js {:className "lead"} "Introduce el documento (JSON)")
+                 (dom/p #js {:className "error"} (:error state))
                  (dom/form nil
                            (dom/textarea #js {:ref "documentBody"}))
                  (dom/a #js {:dangerouslySetInnerHTML #js {:__html "&#215;"}
