@@ -1,18 +1,28 @@
 (ns mammutdb.ice.server
   (:require [compojure.handler :as handler]
-            [compojure.core :refer [defroutes routes GET]]
+            [compojure.core :refer [defroutes routes GET context]]
             [compojure.route :as route]
-            [ring.util.response :as response]))
+            [clojure.java.io :as io]
+            [ring.adapter.jetty9 :refer [run-jetty]]
+            [ring.util.response :as response])
+  (:gen-class))
 
-(defn client-routes []
+
+(def main-routes
   (routes
-   (GET "/" [] (response/resource-response "index.html" {:root "public"}))
+   (GET "/" []
+     (slurp (io/resource "public/index.html")))
    (route/resources "/")))
 
-;(defroutes main-routes (client-routes))
-;(def app (handler/site main-routes))
-;
-;(defn run []
-;  (defonce ^:private server
-;    (run-jetty #'app {:port 3000 :join? false}))
-;  server)
+(defroutes development-routes
+  (GET "/" [] (response/redirect "/_ice/"))
+  (context "/_ice" [] main-routes))
+
+(defn run
+  [join?]
+  (let [app (handler/site development-routes)]
+    (run-jetty app {:port 3000 :join? join?})))
+
+(defn -main
+  [& args]
+  (run true))
