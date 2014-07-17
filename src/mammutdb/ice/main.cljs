@@ -217,8 +217,9 @@
                         (not (nil? val))))]
               (into {} (filter remove-empty curmap))))
           (query-documents [e]
-            (let [validation-result
-                  (m/>>= (p/txt->clj (.-value (om/get-node owner "queryInput")))
+            (let [query-text (.-value (om/get-node owner "queryInput"))
+                  validation-result
+                  (m/>>= (if (empty? query-text) (either/right nil) (p/txt->clj query-text))
                          (fn [input-query]
                            (let [input-ordering (.-value (om/get-node owner "orderingInput"))
                                  input-drop     (.-value (om/get-node owner "dropInput"))
@@ -227,8 +228,7 @@
                                                                 :ordering input-ordering
                                                                 :drop input-drop
                                                                 :take input-take})]
-                             (when (not-empty event-data)
-                               (put! event-bus {:event :query-collection :data event-data}))
+                             (put! event-bus {:event :query-collection :data event-data})
                              (either/right nil))))]
               (when (either/left? validation-result)
                 (js/alert (str ">> " (either/from-either validation-result))))))]
