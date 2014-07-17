@@ -32,7 +32,12 @@
                         :compiler
                         {:output-to "resources/public/js/main.js"
                          :output-dir "resources/public/js/out"
+                         :source-map true
+                         ;; :preamble ["react/react.min.js"]
+                         ;; :externs ["react/externs/react.js"]
+                         ;; :optimizations :whitespace
+
                          :optimizations :none
                          :pretty-print true
-                         :source-map true}}}})
+                         }}}})
 
