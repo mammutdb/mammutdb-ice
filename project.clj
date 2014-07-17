@@ -8,6 +8,7 @@
                  [org.clojure/core.async "0.1.303.0-886421-alpha"]
                  [om "0.5.3"]
                  [cats "0.2.0-SNAPSHOT"]
+                 [com.facebook/react "0.9.0.4"]
                  [prismatic/schema "0.2.4"]
 
                  ; server dependencies
