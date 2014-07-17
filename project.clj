@@ -25,6 +25,8 @@
   :plugins [[lein-cljsbuild "1.0.3"]
             ;[lein-ring "0.8.11"]
             [com.cemerick/austin "0.1.4"]]
+
+  :main ^:skip-aot mammutdb.ice.server
   :cljsbuild {:builds {:cljs-repl
                        {:source-paths ["src"]
                         :compiler
