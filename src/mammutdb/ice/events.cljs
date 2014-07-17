@@ -44,7 +44,23 @@
   (put! event-publisher {:event :result-documents :data []})
 
   (http/json-xhr {:method :get
-                  :url (str base-url "/" (:selected-database @state/app) "/" (:selected-collection @state/app))
+                  :url (str base-url
+                            "/" (:selected-database @state/app)
+                            "/" (:selected-collection @state/app))
+                  :on-complete (fn [result]
+                                 (put! event-publisher {:event :result-documents :data result}))
+                  :on-error (fn [result] (.log js/console (str result)))}))
+
+(defmethod process-event :query-collection [{data :data}]
+  (swap! state/app dissoc :selected-document)
+  (put! event-publisher {:event :result-documents :data []})
+
+  (http/json-xhr {:method :post
+                  :url (str base-url
+                            "/" (:selected-database @state/app)
+                            "/" (:selected-collection @state/app)
+                            "/query")
+                  :data data
                   :on-complete (fn [result]
                                  (put! event-publisher {:event :result-documents :data result}))
                   :on-error (fn [result] (.log js/console (str result)))}))

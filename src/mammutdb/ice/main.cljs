@@ -2,6 +2,8 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [chan <! >! put! pub sub unsub unsub-all]]
+            [cats.monad.maybe :as maybe]
+            [mammutdb.ice.parser :as p]
             [mammutdb.ice.modals :as modals]
             [mammutdb.ice.state :as state]
             [mammutdb.ice.events :refer [event-bus event-publisher event-publication]])
@@ -129,10 +131,12 @@
                     refresh-event-subscriber ([_] (om/refresh! owner)(boolean true))
                     exit-channel ([_] (unsub event-publication :refresh-documents refresh-event-subscriber)(boolean false)))
               (recur)))))
+
       om/IWillUnmount
       (will-unmount [_]
         (let [exit-channel (om/get-state owner :exit-channel)]
           (put! exit-channel {})))
+
       om/IRenderState
       (render-state [this state]
         (let [document (if (= (:rev-idx state) 0) data (-> @state/app :displaying-revs (nth (:rev-idx state) data)))
@@ -150,8 +154,7 @@
                                        (dissoc :_createdat)
                                        (clj->js)
                                        (#(.stringify js/JSON % nil 2)))]
-                     [(dom/pre #js {:dangerouslySetInnerHTML #js {:__html data-text}
-                                    :className "json"})
+                     [
                       (dom/ul #js {:className "button-group"}
                               (dom/li nil (dom/a #js {:data-reveal-id "update-document-modal"
                                                       :onClick (partial (fn [id e]
@@ -164,7 +167,9 @@
                                                       :className "button tiny"} "Anterior"))
                               (dom/li nil (dom/a #js {:disabled disabled-next
                                                       :onClick (fn [e] (when (not disabled-next) (om/set-state! owner :rev-idx (dec (:rev-idx state)))))
-                                                      :className "button tiny"} "Siguiente")))]))))))))
+                                                      :className "button tiny"} "Siguiente")))
+                      (dom/pre #js {:dangerouslySetInnerHTML #js {:__html data-text}
+                                    :className "json"})]))))))))
 
 (defn documents-list-view [data owner]
   (reify
@@ -191,7 +196,26 @@
   (letfn [(get-query-class []
             (str "query" " " (if (:show-query data) "" "collapsed")))
           (toggle-query-visibility []
-            (om/transact! data :show-query (fn [v] (not v))))]
+            (om/transact! data :show-query (fn [v] (not v))))
+          (remove-empty-vals [curmap]
+            (letfn [(remove-empty [[_ val]]
+                      (if (= (type val) js/String)
+                        (and (not (nil? val)) (not-empty val))
+                        (not (nil? val))))]
+              (into {} (filter remove-empty curmap))))
+          (query-documents [e]
+            (let [input-query    (.-value (om/get-node owner "queryInput"))
+                  input-ordering (.-value (om/get-node owner "orderingInput"))
+                  ;input-drop     (p/parse-int (.-value (om/get-node owner "dropInput")))
+                  ;input-take     (p/parse-int (.-value (om/get-node owner "takeInput")))
+                  input-drop     (.-value (om/get-node owner "dropInput"))
+                  input-take     (.-value (om/get-node owner "takeInput"))
+                  event-data (remove-empty-vals {:filter input-query
+                                                 :ordering input-ordering
+                                                 :drop input-drop
+                                                 :take input-take})]
+              (when (not-empty event-data)
+                (put! event-bus {:event :query-collection :data event-data}))))]
     (reify
       om/IRender
       (render[this]
@@ -204,7 +228,13 @@
                   (dom/div #js {:className (get-query-class)}
                            (dom/a #js {:className "hide-btn" :onClick toggle-query-visibility} "[-] hide")
                            (dom/a #js {:className "show-btn" :onClick toggle-query-visibility} "[+] query")
-                           (dom/textarea)
+                           (dom/div #js {:className "query-panel"}
+                                    (dom/textarea #js {:ref "queryInput"})
+                                    (dom/label nil "Ordering: " (dom/input #js {:ref "orderingInput"}))
+                                    (dom/label nil "Drop: " (dom/input #js {:ref "dropInput"}))
+                                    (dom/label nil "Take: " (dom/input #js {:ref "takeInput"}))
+                                    (dom/a #js {:onClick query-documents
+                                                :className "button tiny"} "Do stuff"))
                            (dom/hr nil))
                   (om/build documents-list-view data)]
                  [(dom/p nil "Seleccione una colección")]))))))

@@ -37,9 +37,33 @@ a.button {
 .query {
     clear: both;
 }
-.query > textarea {
+.query-panel > textarea {
     height: 150px;
     resize: none;
+    margin-bottom: 10px;
+}
+
+.query-panel label {
+    padding-top: 10px;
+    float: left;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.query-panel label span {
+    display: block;
+    width: 80px;
+}
+
+.query-panel label input {
+    border: 1px solid #ccc;
+}
+
+.query-panel > .button {
+    float: left;
+    margin-top: 21px;
+    width: 100px;
+    margin-left: 10px;
 }
 
 .query > a {
@@ -52,7 +76,7 @@ a.button {
     display: none;
 }
 
-.query.collapsed > textarea{
+.query.collapsed > .query-panel{
     display: none;
 }
 
@@ -90,14 +114,20 @@ a.button {
 
 .col-document .json {
     padding: 15px;
-    margin-bottom: 10px;
+    margin-top: 10px;
     border: 1px solid #008cba;
     line-height: 16px;
     font-family: monospace;
+    clear:both;
 }
 
+.col-document .button-group {
+    float: right;
+}
 .col-document .button-group .button {
     margin: 0px;
+    height: 27px;
+    line-height: 9px;
 }
 
 .reveal-modal .button-group{
