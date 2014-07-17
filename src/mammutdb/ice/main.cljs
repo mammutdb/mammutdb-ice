@@ -111,10 +111,10 @@
 
 ;; DOCUMENTS
 (defn documents-view [data owner]
-  (letfn [(create-document [label field]
+  (letfn [(create-document [element label field]
             (dom/div nil
                      (dom/span #js {:className "label"} label)
-                     (dom/span #js {:className "field"} (field data))))
+                     (dom/span #js {:className "field"} (field element))))
           (select-document [id _]
             (put! event-bus {:event :select-document :data {:document-id id}}))
         ]
@@ -128,15 +128,21 @@
             (alt!
               refresh-event-subscriber ([_] (om/refresh! owner)))
             (recur))))
-      om/IRender
-      (render [this]
-        (apply dom/div #js {:onClick (partial select-document (:_id data))
-                            :className "col-document"}
-                 (create-document "ID" :_id)
-                 (create-document "REV" :_rev)
-                 (create-document "Created" :_createdat)
+      om/IInitState
+      (init-state [_]
+        { :rev-idx 0 })
+      om/IRenderState
+      (render-state [this state]
+        (let [document (if (= (:rev-idx state) 0) data (-> @state/app :displaying-revs (nth (:rev-idx state) data)))
+              disabled-next (<= (:rev-idx state) 0)
+              disabled-prev (>= (:rev-idx state) (dec (-> @state/app :displaying-revs count)))]
+          (apply dom/div #js {:onClick (partial select-document (:_id data))
+                              :className "col-document"}
+                 (create-document document "ID" :_id)
+                 (create-document document "REV" :_rev)
+                 (create-document document "Created" :_createdat)
                  (if (= (:displaying-document @state/app) (:_id data))
-                   (let [data-text (-> data
+                   (let [data-text (-> document
                                        (dissoc :_id)
                                        (dissoc :_rev)
                                        (dissoc :_createdat)
@@ -151,8 +157,12 @@
                                                                           (put! event-publisher {:event :refresh-modal})) (:_id data))
                                                       :className "button tiny"} "Editar"))
                               (dom/li nil (dom/a #js {:className "button tiny"} "Borrar"))
-                              (dom/li nil (dom/a #js {:className "button tiny"} "Anterior"))
-                              (dom/li nil (dom/a #js {:className "button tiny"} "Siguiente")))])))))))
+                              (dom/li nil (dom/a #js {:disabled disabled-prev
+                                                      :onClick (fn [e] (when (not disabled-prev) (om/set-state! owner :rev-idx (inc (:rev-idx state)))))
+                                                      :className "button tiny"} "Anterior"))
+                              (dom/li nil (dom/a #js {:disabled disabled-next
+                                                      :onClick (fn [e] (when (not disabled-next) (om/set-state! owner :rev-idx (dec (:rev-idx state)))))
+                                                      :className "button tiny"} "Siguiente")))]))))))))
 
 (defn documents-list-view [data owner]
   (reify

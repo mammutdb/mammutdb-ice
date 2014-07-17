@@ -6,6 +6,7 @@
          :documents []
          :show-query false
          :displaying-document nil
+         :displaying-revs []
          :editing-document nil
          }))
 
@@ -33,6 +34,9 @@
 
 (defn displaying-document! [document-id]
   (swap! app assoc :displaying-document document-id))
+
+(defn set-revs! [revs]
+  (swap! app assoc :displaying-revs revs))
 
 (defn edit-document! [document-id data-text]
   (swap! app assoc :editing-document {:id document-id :data data-text}))

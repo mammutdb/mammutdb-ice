@@ -87,7 +87,17 @@
 
 (defmethod process-event :select-document [{data :data}]
   (state/displaying-document! (:document-id data))
-  (put! event-publisher {:event :refresh-documents}))
+  (http/json-xhr {:method :get
+                  :url (str base-url
+                            "/" (:selected-database @state/app)
+                            "/" (:selected-collection @state/app)
+                            "/" (:document-id data)
+                            "/revs")
+                  :on-complete (fn [result]
+                                 (.log js/console "Returned put: " result)
+                                 (state/set-revs! result)
+                                 (put! event-publisher {:event :refresh-documents}))
+                  :on-error (fn [result] (.log js/console (str result)))}))
 
 (defn start-event-loop []
   (.log js/console "Starting event loop")

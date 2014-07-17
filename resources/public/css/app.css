@@ -1,3 +1,8 @@
+a.button {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
 .logo {
     padding-left: 22px;
 }
