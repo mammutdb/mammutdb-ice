@@ -3,6 +3,8 @@
             [om.dom :as dom :include-macros true]
             [cljs.core.async :refer [chan <! >! put! pub sub unsub unsub-all]]
             [cats.monad.maybe :as maybe]
+            [cats.core :as m]
+            [cats.monad.either :as either]
             [mammutdb.ice.parser :as p]
             [mammutdb.ice.modals :as modals]
             [mammutdb.ice.state :as state]
@@ -204,18 +206,21 @@
                         (not (nil? val))))]
               (into {} (filter remove-empty curmap))))
           (query-documents [e]
-            (let [input-query    (.-value (om/get-node owner "queryInput"))
-                  input-ordering (.-value (om/get-node owner "orderingInput"))
-                  ;input-drop     (p/parse-int (.-value (om/get-node owner "dropInput")))
-                  ;input-take     (p/parse-int (.-value (om/get-node owner "takeInput")))
-                  input-drop     (.-value (om/get-node owner "dropInput"))
-                  input-take     (.-value (om/get-node owner "takeInput"))
-                  event-data (remove-empty-vals {:filter input-query
-                                                 :ordering input-ordering
-                                                 :drop input-drop
-                                                 :take input-take})]
-              (when (not-empty event-data)
-                (put! event-bus {:event :query-collection :data event-data}))))]
+            (let [validation-result
+                  (m/>>= (p/txt->clj (.-value (om/get-node owner "queryInput")))
+                         (fn [input-query]
+                           (let [input-ordering (.-value (om/get-node owner "orderingInput"))
+                                 input-drop     (.-value (om/get-node owner "dropInput"))
+                                 input-take     (.-value (om/get-node owner "takeInput"))
+                                 event-data (remove-empty-vals {:filter input-query
+                                                                :ordering input-ordering
+                                                                :drop input-drop
+                                                                :take input-take})]
+                             (when (not-empty event-data)
+                               (put! event-bus {:event :query-collection :data event-data}))
+                             (either/right nil))))]
+              (when (either/left? validation-result)
+                (js/alert (str ">> " (either/from-either validation-result))))))]
     (reify
       om/IRender
       (render[this]

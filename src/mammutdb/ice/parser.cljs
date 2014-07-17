@@ -1,5 +1,6 @@
 (ns mammutdb.ice.parser
   (:require [schema.core :as s]
+            [cats.core :as m]
             [cats.monad.either :as either]
             [cats.monad.maybe :as maybe]
             [clojure.string :refer [join]])
@@ -17,6 +18,13 @@
     (either/right (.stringify js/JSON json))
     (catch js/Error e
       (either/left (.-message e)))))
+
+(defn txt->clj [text]
+  (m/>>= (txt->json text)
+         (fn [json] (either/right (js->clj json)))))
+
+(defn clj->txt [data]
+  (json->txt (clj->js data)))
 
 (defn parse-int [s]
   (let [result (js/parseInt s)]

@@ -11,12 +11,18 @@
                  [prismatic/schema "0.2.4"]
 
                  ; server dependencies
-                 [ring/ring "1.2.2"]]
-  :ring {:handler mammutdb.ice.server/app}
+                 [compojure "1.1.8"]
+                 [metosin/ring-http-response "0.4.0"]
+                 [info.sunng/ring-jetty9-adapter "0.6.0" :exclusions [ring/ring-core]]
+                 [ring/ring-ssl "0.2.1" :exclusions [ring/ring-core]]
+                 [ring/ring-json "0.3.1" :exclusions [ring/ring-core]]
+                 [ring/ring-core "1.2.2" :exclusions [javax.servlet/servlet-api]]
+                 [ring/ring-servlet "1.2.2" :exclusions [javax.servlet/servlet-api]]]
+  ;:ring {:handler mammutdb.ice.server/app}
   :resource-paths ["resources"]
   :target-path "target/%s"
   :plugins [[lein-cljsbuild "1.0.3"]
-            [lein-ring "0.8.11"]
+            ;[lein-ring "0.8.11"]
             [com.cemerick/austin "0.1.4"]]
   :cljsbuild {:builds {:cljs-repl
                        {:source-paths ["src"]
