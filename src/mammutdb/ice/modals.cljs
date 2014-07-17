@@ -32,10 +32,9 @@
         (dom/div nil
                  (dom/p #js {:className "lead"} "Introduce el nombre de la base de datos")
                  (dom/p #js {:className "error"} (:error state))
-                 (dom/form nil
-                           (dom/label nil "Database:")
-                           (dom/input #js {:ref "databaseName"
-                                           :type "text"}))
+                 (dom/label nil "Database:")
+                 (dom/input #js {:ref "databaseName"
+                                 :type "text"})
                  (dom/a #js {:dangerouslySetInnerHTML #js {:__html "&#215;"}
                              :className "close-reveal-modal"} nil)
                  (dom/ul #js {:className "button-group"}
@@ -72,13 +71,12 @@
         (dom/div nil
                  (dom/p #js {:className "lead"} "Introduce la colección y el tipo")
                  (dom/p #js {:className "error"} (:error state))
-                 (dom/form nil
-                           (dom/label nil "Collection:")
-                           (dom/input #js {:ref "collectionName"
-                                           :type "text"})
-                           (dom/label nil "Type:")
-                           (dom/select #js {:ref "collectionType"}
-                                       (dom/option #js {:value "json"} "JSON")))
+                 (dom/label nil "Collection:")
+                 (dom/input #js {:ref "collectionName"
+                                 :type "text"})
+                 (dom/label nil "Type:")
+                 (dom/select #js {:ref "collectionType"}
+                             (dom/option #js {:value "json"} "JSON"))
                  (dom/a #js {:dangerouslySetInnerHTML #js {:__html "&#215;"}
                              :className "close-reveal-modal"} nil)
                  (dom/ul #js {:className "button-group"}
@@ -114,8 +112,7 @@
         (dom/div nil
                  (dom/p #js {:className "lead"} "Introduce el documento (JSON)")
                  (dom/p #js {:className "error"} (:error state))
-                 (dom/form nil
-                           (dom/textarea #js {:ref "documentBody"}))
+                 (dom/textarea #js {:ref "documentBody"})
                  (dom/a #js {:dangerouslySetInnerHTML #js {:__html "&#215;"}
                              :className "close-reveal-modal"} nil)
                  (dom/ul #js {:className "button-group"}

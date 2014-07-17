@@ -20,7 +20,7 @@
                   :url (str base-url "/")
                   :on-complete (fn [result]
                                  (put! event-publisher {:event :result-databases :data result}))
-                  :on-error (fn [result] (.log js/console (str result)))}))
+                  :on-error state/set-error!}))
 
 (defmethod process-event :select-database [event]
   (let [value (-> event :data :database)
@@ -36,7 +36,7 @@
                       :url (str base-url "/" (:selected-database @state/app))
                       :on-complete (fn [result]
                                      (put! event-publisher {:event :result-collections :data result}))
-                      :on-error (fn [result] (.log js/console (str result)))}))))
+                      :on-error state/set-error!}))))
 
 (defmethod process-event :select-collection [event]
   (swap! state/app assoc :selected-collection (-> event :data :collection))
@@ -49,7 +49,7 @@
                             "/" (:selected-collection @state/app))
                   :on-complete (fn [result]
                                  (put! event-publisher {:event :result-documents :data result}))
-                  :on-error (fn [result] (.log js/console (str result)))}))
+                  :on-error state/set-error!}))
 
 (defmethod process-event :query-collection [{data :data}]
   (swap! state/app dissoc :selected-document)
@@ -63,7 +63,7 @@
                   :data data
                   :on-complete (fn [result]
                                  (put! event-publisher {:event :result-documents :data result}))
-                  :on-error (fn [result] (.log js/console (str result)))}))
+                  :on-error state/set-error!}))
 
 (defmethod process-event :create-database [event]
   (http/json-xhr {:method :put
@@ -72,7 +72,7 @@
                                  (state/add-database! result)
                                  (put! event-publisher {:event :set-database :data result})
                                  (process-event {:event :select-database :data (:data event)}))
-                  :on-error (fn [result] (.log js/console (str result)))}))
+                  :on-error state/set-error!}))
 
 (defmethod process-event :create-collection [event]
   (http/json-xhr {:method :put
@@ -81,7 +81,7 @@
                                  (state/add-collection! result)
                                  (put! event-publisher {:event :set-collection :data result})
                                  (process-event {:event :select-collection :data (:data event)}))
-                  :on-error (fn [result] (.log js/console (str result)))}))
+                  :on-error state/set-error!}))
 
 (defmethod process-event :create-document [event]
   (http/json-xhr {:method :post
@@ -90,7 +90,7 @@
                   :on-complete (fn [result]
                                  (state/add-document! result)
                                  (put! event-publisher {:event :refresh-documents}))
-                  :on-error (fn [result] (.log js/console (str result)))}))
+                  :on-error state/set-error!}))
 
 (defmethod process-event :select-document [{data :data}]
   (state/displaying-document! (:document-id data))
@@ -103,7 +103,40 @@
                   :on-complete (fn [result]
                                  (state/set-revs! result)
                                  (put! event-publisher {:event :refresh-documents}))
-                  :on-error (fn [result] (.log js/console (str result)))}))
+                  :on-error state/set-error!}))
+
+
+(defmethod process-event :remove-database [{database-id :data}]
+  (.log js/console (str "Removing database " database-id))
+  (http/json-xhr {:method :delete
+                  :url (str base-url "/" database-id)
+                  :on-complete (fn [result]
+                                 (state/remove-database! database-id))
+                  :on-error state/set-error!}))
+
+(defmethod process-event :remove-collection [{collection-id :data}]
+  (.log js/console (str "Removing collection " collection-id))
+  (http/json-xhr {:method :delete
+                  :url (str base-url
+                            "/" (:selected-database @state/app)
+                            "/" collection-id)
+                  :on-complete (fn [result]
+                                 (state/remove-collection! collection-id)
+                                 )
+                  :on-error state/set-error!}))
+
+(defmethod process-event :remove-document [{document-id :data}]
+  (.log js/console (str "Removing document " document-id))
+  (http/json-xhr {:method :delete
+                  :url (str base-url
+                            "/" (:selected-database @state/app)
+                            "/" (:selected-collection @state/app)
+                            "/" document-id)
+                  :on-complete (fn [result]
+                                 (state/remove-document! document-id)
+                                 (put! event-publisher {:event :refresh-documents}))
+                  :on-error state/set-error!}))
+
 
 (defn start-event-loop []
   (go-loop []

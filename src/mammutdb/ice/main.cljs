@@ -7,6 +7,7 @@
             [cats.monad.either :as either]
             [mammutdb.ice.parser :as p]
             [mammutdb.ice.modals :as modals]
+            [mammutdb.ice.errors :as errors]
             [mammutdb.ice.state :as state]
             [mammutdb.ice.events :refer [event-bus event-publisher event-publication]])
   (:require-macros [cljs.core.async.macros :refer [go go-loop alt!]]))
@@ -47,7 +48,10 @@
                (dom/h4 nil "Databases")
                (dom/a #js {:data-reveal-id "new-database-modal"
                            :className "button tiny"} "New database")
-               (dom/a #js {:className "button tiny"} "Delete")
+               (dom/a #js {:onClick (partial (fn [database-id e]
+                                               (put! event-bus {:event :remove-database :data database-id}))
+                                             (:selected-database data))
+                           :className "button tiny"} "Delete")
                (if (empty? (:databases data))
                  (dom/p nil "No databases found")
                  (apply dom/select #js {:name "database"
@@ -78,7 +82,11 @@
                                               (put! event-bus {:event :select-collection :data {:collection selected}})
                                               ) (:name data))}
                      (:name data))
-              (dom/a #js {:className "close-btn"} "x")))))
+              (dom/a #js {:onClick (partial (fn [collection-id e]
+                                              (.log js/console "click")
+                                              (put! event-bus {:event :remove-collection :data collection-id})) (:id data))
+                          :className "close-btn"
+                          :dangerouslySetInnerHTML #js {:__html "&#215;"}})))))
 
 (defn collection-list-view [data owner]
   (reify
@@ -156,14 +164,17 @@
                                        (dissoc :_createdat)
                                        (clj->js)
                                        (#(.stringify js/JSON % nil 2)))]
-                     [
-                      (dom/ul #js {:className "button-group"}
+                     [(dom/ul #js {:className "button-group"}
                               (dom/li nil (dom/a #js {:data-reveal-id "update-document-modal"
                                                       :onClick (partial (fn [id e]
                                                                           (state/edit-document! id data-text)
-                                                                          (put! event-publisher {:event :refresh-modal})) (:_id data))
+                                                                          (put! event-publisher {:event :refresh-modal}))
+                                                                        (:_id data))
                                                       :className "button tiny"} "Editar"))
-                              (dom/li nil (dom/a #js {:className "button tiny"} "Borrar"))
+                              (dom/li nil (dom/a #js {:onClick (partial (fn [id e]
+                                                                          (put! event-bus {:event :remove-document :data id}))
+                                                                        (:_id data))
+                                                      :className "button tiny"} "Borrar"))
                               (dom/li nil (dom/a #js {:disabled disabled-prev
                                                       :onClick (fn [e] (when (not disabled-prev) (om/set-state! owner :rev-idx (inc (:rev-idx state)))))
                                                       :className "button tiny"} "Anterior"))

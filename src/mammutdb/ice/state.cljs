@@ -8,6 +8,7 @@
          :displaying-document nil
          :displaying-revs []
          :editing-document nil
+         :error nil
          }))
 
 
@@ -40,3 +41,29 @@
 
 (defn edit-document! [document-id data-text]
   (swap! app assoc :editing-document {:id document-id :data data-text}))
+
+(defn set-error! [error]
+  (swap! app assoc :error error))
+
+(defn disable-error! []
+  (swap! app dissoc :error))
+
+(defn remove-by-id [map collection-key item-id id-key]
+  (let [result (collection-key map)
+        filter-fun (fn [item] (not= (id-key item) item-id))
+        result (filter filter-fun result)
+        result (into [] result)]
+    (assoc map collection-key result)))
+
+(defn remove-database! [database-id]
+  (swap! app remove-by-id :databases database-id :id)
+  (if (= (:selected-database @app) database-id)
+    (swap! app dissoc :selected-database)))
+
+(defn remove-collection! [collection-id]
+  (swap! app remove-by-id :collections collection-id :id)
+  (if (= (:selected-collection @app) collection-id)
+    (swap! app dissoc :selected-collection)))
+
+(defn remove-document! [document-id]
+  (swap! app remove-by-id :documents document-id :_id))
