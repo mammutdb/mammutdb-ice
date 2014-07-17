@@ -5,7 +5,7 @@
             [mammutdb.ice.modals :as modals]
             [mammutdb.ice.state :as state]
             [mammutdb.ice.events :refer [event-bus event-publisher event-publication]])
-  (:require-macros [cljs.core.async.macros :refer [go-loop alt!]]))
+  (:require-macros [cljs.core.async.macros :refer [go go-loop alt!]]))
 
 (enable-console-print!)
 
@@ -33,15 +33,12 @@
         (go-loop []
           (alt!
             result-event-subscriber ([{event-data :data}]
-                                       (.log js/console (str event-data))
                                        (om/update! data :databases event-data))
             refresh-event-subscriber ([{event-data :data}]
-                                        (.log js/console (str "setting " event-data))
                                         (set! (.-value (om/get-node owner "databaseList")) (:name event-data))))
           (recur))))
     om/IRender
     (render [this]
-      (.log js/console (str "Render >> " (:databases @state/app)))
       (dom/div #js {:className "database-container"}
                (dom/h4 nil "Databases")
                (dom/a #js {:data-reveal-id "new-database-modal"
@@ -87,7 +84,6 @@
         (sub event-publication :result-collections event-subscriber)
         (go-loop []
           (let [{result :data} (<! event-subscriber)]
-            (.log js/console (str result))
             (om/update! data :collections result))
           (recur))))
     om/IRender
@@ -111,26 +107,32 @@
 
 ;; DOCUMENTS
 (defn documents-view [data owner]
-  (letfn [(create-document [element label field]
-            (dom/div nil
-                     (dom/span #js {:className "label"} label)
-                     (dom/span #js {:className "field"} (field element))))
-          (select-document [id _]
-            (put! event-bus {:event :select-document :data {:document-id id}}))
-        ]
+  (let [create-document (fn [element label field]
+                           (dom/div nil
+                                    (dom/span #js {:className "label"} label)
+                                    (dom/span #js {:className "field"} (field element))))
+        select-document (fn [id _]
+                           (put! event-bus {:event :select-document :data {:document-id id}}))]
     (reify
-      om/IWillMount
-      (will-mount [_]
-        (let [event-subscriber (chan)
-              refresh-event-subscriber (chan)]
-          (sub event-publication :refresh-documents refresh-event-subscriber)
-          (go-loop []
-            (alt!
-              refresh-event-subscriber ([_] (om/refresh! owner)))
-            (recur))))
       om/IInitState
       (init-state [_]
-        { :rev-idx 0 })
+        {:rev-idx 0
+         :exit-channel (chan)})
+
+      om/IWillMount
+      (will-mount [_]
+        (let [refresh-event-subscriber (chan)
+              exit-channel (om/get-state owner :exit-channel)]
+          (sub event-publication :refresh-documents refresh-event-subscriber)
+          (go-loop []
+            (when (alt!
+                    refresh-event-subscriber ([_] (om/refresh! owner)(boolean true))
+                    exit-channel ([_] (unsub event-publication :refresh-documents refresh-event-subscriber)(boolean false)))
+              (recur)))))
+      om/IWillUnmount
+      (will-unmount [_]
+        (let [exit-channel (om/get-state owner :exit-channel)]
+          (put! exit-channel {})))
       om/IRenderState
       (render-state [this state]
         (let [document (if (= (:rev-idx state) 0) data (-> @state/app :displaying-revs (nth (:rev-idx state) data)))
