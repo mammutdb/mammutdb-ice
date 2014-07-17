@@ -6,7 +6,7 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-2268"]
                  [org.clojure/core.async "0.1.303.0-886421-alpha"]
-                 [om "0.5.3"]
+                 [om "0.6.5"]
                  [cats "0.2.0-SNAPSHOT"]
                  [com.facebook/react "0.9.0.4"]
                  [prismatic/schema "0.2.4"]
