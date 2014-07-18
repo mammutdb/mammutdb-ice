@@ -111,7 +111,13 @@
   (http/json-xhr {:method :delete
                   :url (str base-url "/" database-id)
                   :on-complete (fn [result]
-                                 (state/remove-database! database-id))
+                                 (state/remove-database! database-id)
+                                 (swap! state/app dissoc :selected-database)
+                                 (swap! state/app dissoc :selected-collection)
+                                 (swap! state/app dissoc :selected-document)
+                                 (put! event-publisher {:event :set-database :data nil})
+                                 (put! event-publisher {:event :result-collections :data []})
+                                 (put! event-publisher {:event :result-documents :data []}))
                   :on-error state/set-error!}))
 
 (defmethod process-event :remove-collection [{collection-id :data}]

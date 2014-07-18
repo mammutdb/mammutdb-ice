@@ -40,7 +40,7 @@
             result-event-subscriber ([{event-data :data}]
                                        (om/update! data :databases event-data))
             refresh-event-subscriber ([{event-data :data}]
-                                        (set! (.-value (om/get-node owner "databaseList")) (:name event-data))))
+                                        (set! (.-value (om/get-node owner "databaseList")) (if (nil? event-data) nil (:name event-data)))))
           (recur))))
     om/IRender
     (render [this]
@@ -138,7 +138,11 @@
           (sub event-publication :refresh-documents refresh-event-subscriber)
           (go-loop []
             (when (alt!
-                    refresh-event-subscriber ([_] (om/refresh! owner)(boolean true))
+                    refresh-event-subscriber ([_] (try
+                                                    (om/refresh! owner)
+                                                    (boolean true)
+                                                    (catch js/Error e
+                                                      (boolean false))))
                     exit-channel ([_] (unsub event-publication :refresh-documents refresh-event-subscriber)(boolean false)))
               (recur)))))
 
@@ -152,7 +156,7 @@
         (let [document (if (= (:rev-idx state) 0) data (-> @state/app :displaying-revs (nth (:rev-idx state) data)))
               disabled-next (<= (:rev-idx state) 0)
               disabled-prev (>= (:rev-idx state) (dec (-> @state/app :displaying-revs count)))]
-          (apply dom/div #js {:onClick (partial select-document (:_id data))
+          (apply dom/div #js {:onMouseOver (partial select-document (:_id data))
                               :className "col-document"}
                  (create-document document "ID" :_id)
                  (create-document document "REV" :_rev)
