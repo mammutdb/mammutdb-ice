@@ -27,9 +27,6 @@
       (events/listen
        xhr goog.net.EventType.ERROR
        (fn [e]
-         (.log js/console e)
-         (.log js/console xhr)
-         (.log js/console (.formatMsg_ xhr "Sending resquest"))
          (on-error (str (.formatMsg_ xhr "Sending resquest") (.getResponseText xhr)))))
       (. xhr
          (send url (meths method)

@@ -107,7 +107,6 @@
 
 
 (defmethod process-event :remove-database [{database-id :data}]
-  (.log js/console (str "Removing database " database-id))
   (http/json-xhr {:method :delete
                   :url (str base-url "/" database-id)
                   :on-complete (fn [result]
@@ -121,7 +120,6 @@
                   :on-error state/set-error!}))
 
 (defmethod process-event :remove-collection [{collection-id :data}]
-  (.log js/console (str "Removing collection " collection-id))
   (http/json-xhr {:method :delete
                   :url (str base-url
                             "/" (:selected-database @state/app)
@@ -132,7 +130,6 @@
                   :on-error state/set-error!}))
 
 (defmethod process-event :remove-document [{document-id :data}]
-  (.log js/console (str "Removing document " document-id))
   (http/json-xhr {:method :delete
                   :url (str base-url
                             "/" (:selected-database @state/app)

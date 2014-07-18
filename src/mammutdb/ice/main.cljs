@@ -83,7 +83,6 @@
                                               ) (:name data))}
                      (:name data))
               (dom/a #js {:onClick (partial (fn [collection-id e]
-                                              (.log js/console "click")
                                               (put! event-bus {:event :remove-collection :data collection-id})) (:id data))
                           :className "close-btn"
                           :dangerouslySetInnerHTML #js {:__html "&#215;"}})))))

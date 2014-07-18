@@ -14,9 +14,7 @@
     (let [obj (.parse js/JSON val)]
       (and (= (type obj) js/Object)
            (not= (type obj) js/Array)))
-    (catch js/Error e
-      (.log js/console e)
-      false)))
+    (catch js/Error e false)))
 
 (def create-schemas
   {:database
@@ -35,7 +33,6 @@
     (let [schema (type create-schemas)]
       (either/right (s/validate schema data)))
     (catch js/Error e
-      (.log js/console (str (.-data e)))
       (let [fields (->> (.-data e)
                         (:error)
                         (keys)
