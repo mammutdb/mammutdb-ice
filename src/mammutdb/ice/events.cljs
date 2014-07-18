@@ -1,6 +1,7 @@
 (ns mammutdb.ice.events
   (:require [mammutdb.ice.http :as http]
             [mammutdb.ice.state :as state]
+            [secretary.core :as sec]
             [cljs.core.async :refer [chan <! >! put! pub sub unsub unsub-all]])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 

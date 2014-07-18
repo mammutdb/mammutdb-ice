@@ -162,8 +162,8 @@
                     (om/set-state! owner :error (either/from-either validation-result)))))]
         (dom/div nil
                  (dom/p #js {:className "lead"} "Modifica el documento (JSON)")
-                 (dom/p #js {:className "documentId"} (str (-> data :editing-document :id)))
-                 (dom/p #js {:className "revId"} (str (-> data :editing-document :rev)))
+                 (dom/p #js {:className "documentId"} (str "ID: "(-> data :editing-document :id)))
+                 (dom/p #js {:className "revId"} (str "REV: "(-> data :editing-document :rev)))
                  (dom/p #js {:className "error"} (:error state))
                  (dom/textarea #js {:ref "documentBody"})
                  (dom/a #js {:dangerouslySetInnerHTML #js {:__html "&#215;"}

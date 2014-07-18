@@ -9,7 +9,8 @@
             [mammutdb.ice.modals :as modals]
             [mammutdb.ice.errors :as errors]
             [mammutdb.ice.state :as state]
-            [mammutdb.ice.events :refer [event-bus event-publisher event-publication]])
+            [mammutdb.ice.events :refer [event-bus event-publisher event-publication]]
+            [mammutdb.ice.routes :as routes])
   (:require-macros [cljs.core.async.macros :refer [go go-loop alt!]]))
 
 (enable-console-print!)
@@ -40,8 +41,18 @@
             result-event-subscriber ([{event-data :data}]
                                        (om/update! data :databases event-data))
             refresh-event-subscriber ([{event-data :data}]
-                                        (set! (.-value (om/get-node owner "databaseList")) (if (nil? event-data) nil (:name event-data)))))
+                                        (let [node (om/get-node owner "databaseList")]
+                                          (when (not (nil? node))
+                                            (set! (.-value node) (if (nil? event-data) nil (:name event-data)))))))
           (recur))))
+
+    om/IDidUpdate
+    (did-update [this prev-props prev-state]
+      (let [selected (-> @state/app :selected-database)
+            node (om/get-node owner "databaseList")]
+        (when (and node selected)
+          (set! (.-value node) selected))))
+
     om/IRender
     (render [this]
       (dom/div #js {:className "database-container"}
@@ -59,6 +70,7 @@
                                         :onChange (fn [e]
                                                     (let [selected (->> (.-target e)
                                                                         (.-value))]
+                                                      (routes/set-hash {:database selected})
                                                       (put! event-bus {:event :select-database :data {:database selected}})))}
                         (into [(dom/option #js {:value ""} "-- empty --")]
                               (om/build-all database-view (:databases data)))))
@@ -79,6 +91,7 @@
                           :onClick (partial (fn [selected e]
                                               ; (om/update! data :selected-collection collection)
                                               ; (request-documents data database collection)
+                                              (routes/set-hash {:database (:selected-database @state/app) :collection selected})
                                               (put! event-bus {:event :select-collection :data {:collection selected}})
                                               ) (:name data))}
                      (:name data))

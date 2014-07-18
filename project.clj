@@ -10,6 +10,7 @@
                  [cats "0.2.0-SNAPSHOT"]
                  [com.facebook/react "0.9.0.4"]
                  [prismatic/schema "0.2.4"]
+                 [secretary "1.2.0"]
 
                  ; server dependencies
                  [compojure "1.1.8"]

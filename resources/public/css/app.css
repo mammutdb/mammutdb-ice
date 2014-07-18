@@ -27,6 +27,7 @@ input[type="checkbox"] {
 
 .collection-list-document .collection-link {
     float: left;
+    width: 180px;
 }
 
 .collection-list-document .close-btn {
