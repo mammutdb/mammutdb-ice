@@ -22,7 +22,8 @@
 
    :collection
    {:collection (s/both s/Str (s/pred valid-name?))
-    :type (s/both  s/Str (s/pred (partial = "json")))}
+    :type (s/both  s/Str (s/pred (partial = "json")))
+    :occ s/Bool}
 
    :document
    {:document (s/both s/Str (s/pred valid-json?))}})
@@ -33,6 +34,7 @@
     (let [schema (type create-schemas)]
       (either/right (s/validate schema data)))
     (catch js/Error e
+      (.log js/console e)
       (let [fields (->> (.-data e)
                         (:error)
                         (keys)

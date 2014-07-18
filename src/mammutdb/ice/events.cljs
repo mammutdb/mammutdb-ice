@@ -76,7 +76,11 @@
 
 (defmethod process-event :create-collection [event]
   (http/json-xhr {:method :put
-                  :url (str base-url "/" (:selected-database @state/app) "/" (-> event :data :collection))
+                  :url (str base-url
+                            "/" (:selected-database @state/app)
+                            "/" (-> event :data :collection))
+                  :data {:occ  (-> event :data :occ)
+                         :type (-> event :data :type)}
                   :on-complete (fn [result]
                                  (state/add-collection! result)
                                  (put! event-publisher {:event :set-collection :data result})
@@ -85,7 +89,9 @@
 
 (defmethod process-event :create-document [event]
   (http/json-xhr {:method :post
-                  :url (str base-url "/" (:selected-database @state/app) "/" (:selected-collection @state/app))
+                  :url (str base-url
+                            "/" (:selected-database @state/app)
+                            "/" (:selected-collection @state/app))
                   :data (-> event :data :document)
                   :on-complete (fn [result]
                                  (state/add-document! result)

@@ -169,10 +169,11 @@
                                        (#(.stringify js/JSON % nil 2)))]
                      [(dom/ul #js {:className "button-group"}
                               (dom/li nil (dom/a #js {:data-reveal-id "update-document-modal"
-                                                      :onClick (partial (fn [id e]
-                                                                          (state/edit-document! id data-text)
+                                                      :onClick (partial (fn [id rev e]
+                                                                          (state/edit-document! id rev data-text)
                                                                           (put! event-publisher {:event :refresh-modal}))
-                                                                        (:_id data))
+                                                                        (:_id data)
+                                                                        (:_rev data))
                                                       :className "button tiny"} "Editar"))
                               (dom/li nil (dom/a #js {:onClick (partial (fn [id e]
                                                                           (put! event-bus {:event :remove-document :data id}))

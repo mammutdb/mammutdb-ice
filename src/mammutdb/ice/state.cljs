@@ -39,8 +39,8 @@
 (defn set-revs! [revs]
   (swap! app assoc :displaying-revs revs))
 
-(defn edit-document! [document-id data-text]
-  (swap! app assoc :editing-document {:id document-id :data data-text}))
+(defn edit-document! [document-id document-rev data-text]
+  (swap! app assoc :editing-document {:id document-id :rev document-rev :data data-text}))
 
 (defn set-error! [error]
   (swap! app assoc :error error))

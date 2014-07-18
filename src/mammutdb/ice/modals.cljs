@@ -58,7 +58,8 @@
       (letfn [(handle-create-collection [_]
                 (let [collection-name (.-value (om/get-node owner "collectionName"))
                       collection-type (.-value (om/get-node owner "collectionType"))
-                      create-data {:collection collection-name :type collection-type}
+                      collection-occ  (.-checked  (om/get-node owner "occCheck"))
+                      create-data     {:collection collection-name :type collection-type :occ collection-occ}
                       validation-result (m/>>= (valid/validate-create-data :collection create-data)
                                                (fn [valid-data]
                                                  (om/set-state! owner :error "")
@@ -72,11 +73,11 @@
                  (dom/p #js {:className "lead"} "Introduce la colección y el tipo")
                  (dom/p #js {:className "error"} (:error state))
                  (dom/label nil "Collection:")
-                 (dom/input #js {:ref "collectionName"
-                                 :type "text"})
+                 (dom/input #js {:ref "collectionName" :type "text"})
+                 (dom/label #js {:className "occ-field"} "Occ?"
+                            (dom/input #js {:ref "occCheck" :type "checkbox"}))
                  (dom/label nil "Type:")
-                 (dom/select #js {:ref "collectionType"}
-                             (dom/option #js {:value "json"} "JSON"))
+                 (dom/select #js {:ref "collectionType"} (dom/option #js {:value "json"} "JSON"))
                  (dom/a #js {:dangerouslySetInnerHTML #js {:__html "&#215;"}
                              :className "close-reveal-modal"} nil)
                  (dom/ul #js {:className "button-group"}
@@ -144,14 +145,16 @@
       (set! (.-value (om/get-node owner "documentBody")) (-> data :editing-document :data)))
     om/IRenderState
     (render-state [this state]
-      (letfn [(handle-update-document [id _]
+      (letfn [(handle-update-document [id rev _]
                 (let [document-text (->> (om/get-node owner "documentBody") (.-value))
                       validation-result (m/>>= (valid/validate-create-data :document {:document document-text})
                                                (fn [_] (p/txt->json document-text))
                                                (fn [valid-json]
                                                  (om/set-state! owner :error "")
                                                  (put! event-bus {:event :create-document
-                                                                  :data {:document (assoc (js->clj valid-json) :_id id)}})
+                                                                  :data {:document (-> (js->clj valid-json)
+                                                                                       (assoc :_id id)
+                                                                                       (assoc :_rev rev))}})
                                                  (jquery/close-modal "new-document-modal")
                                                  (set! (.-value (om/get-node owner "documentBody")) "")
                                                  (either/right)))]
@@ -160,12 +163,15 @@
         (dom/div nil
                  (dom/p #js {:className "lead"} "Modifica el documento (JSON)")
                  (dom/p #js {:className "documentId"} (str (-> data :editing-document :id)))
+                 (dom/p #js {:className "revId"} (str (-> data :editing-document :rev)))
                  (dom/p #js {:className "error"} (:error state))
                  (dom/textarea #js {:ref "documentBody"})
                  (dom/a #js {:dangerouslySetInnerHTML #js {:__html "&#215;"}
                              :className "close-reveal-modal"} nil)
                  (dom/ul #js {:className "button-group"}
-                         (dom/li nil (dom/a #js {:onClick (partial handle-update-document (-> data :editing-document :id))
+                         (dom/li nil (dom/a #js {:onClick (partial handle-update-document
+                                                                   (-> data :editing-document :id)
+                                                                   (-> data :editing-document :rev))
                                                  :className "button small"} "Aceptar"))
                          (dom/li nil (dom/a #js {:onClick #(jquery/close-modal "new-document-modal")
                                                  :className "button small alert"} "Cancelar"))))))))

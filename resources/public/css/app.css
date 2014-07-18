@@ -2,6 +2,12 @@ a.button {
     -webkit-user-select: none;
     user-select: none;
 }
+input[type="checkbox"] {
+    margin: 0;
+    vertical-align: middle;
+    margin-left: 10px;
+    margin-bottom: 1px;
+}
 
 .logo {
     padding-left: 22px;
@@ -141,4 +147,8 @@ a.button {
 
 #new-document-modal textarea, #update-document-modal textarea{
     height: 300px;
+}
+
+#new-collection-modal .occ-field {
+    margin-bottom: 10px;
 }
